@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"net/http"
+	"ops-entry/controllers"
 	"os"
 )
 
@@ -18,7 +19,11 @@ func NewRouter() *gin.Engine {
 	router := gin.New()
 
 	router.GET("/", RootDirHandler)
-
+	// api for file
+	fileRouter := router.Group("/file")
+	{
+		fileRouter.POST("/upload/kubeconfig", controllers.KubeconfigFileUploadHandler)
+	}
 	return router
 }
 
