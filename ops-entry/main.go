@@ -16,6 +16,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"ops-entry/constValue"
+	"ops-entry/db"
 	"ops-entry/log"
 	router2 "ops-entry/router"
 )
@@ -37,11 +38,17 @@ import (
 
 func main() {
 	log.InitLog()
+	err := db.InitDb()
+	if err != nil {
+		logrus.Errorf("init db failed: %s", err.Error())
+		return
+	}
+
 	router := router2.NewRouter()
 	listen := fmt.Sprintf("%s:%d", constValue.ListenIP, constValue.ListenPort)
 	logrus.Infof("Logger and gin inited, GinIsDebug[%v], listenIp[%s] listenPort[%d]", gin.IsDebugging(), constValue.ListenIP, constValue.ListenPort)
 
-	err := router.Run(listen) // listen and serve on 0.0.0.0:8080
+	err = router.Run(listen) // listen and serve on 0.0.0.0:8080
 	if err != nil {
 		logrus.Errorf("listen err: %s", err.Error())
 	}
