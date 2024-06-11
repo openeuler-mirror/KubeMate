@@ -5,6 +5,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"net/http"
 	"ops-entry/controllers"
+	"ops-entry/middlewares"
 	"os"
 )
 
@@ -18,6 +19,8 @@ func NewRouter() *gin.Engine {
 	gin.SetMode(gin.ReleaseMode) // use release gin mode
 	router := gin.New()
 
+	router.Use(middlewares.Logger())   // logger middlerware
+	router.Use(middlewares.Recovery()) // panic in single request instead of whole project
 	router.GET("/", RootDirHandler)
 	// api for file
 	fileRouter := router.Group("/file")
