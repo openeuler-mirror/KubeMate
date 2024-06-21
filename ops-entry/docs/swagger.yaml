@@ -1,0 +1,52 @@
+basePath: /swagger/index.html
+definitions:
+  proto.FileUploadResult:
+    properties:
+      code:
+        type: integer
+      msg:
+        type: string
+      request_id:
+        type: string
+    type: object
+host: 0.0.0.0:8080
+info:
+  contact:
+    email: https://gitee.com/openeuler/KubeMate
+    name: https://gitee.com/openeuler/KubeMate
+    url: https://gitee.com/openeuler/KubeMate
+  description: 接受运维管理平台的请求，进行os以云原生的方式进行升级
+  license:
+    name: Mulan PSL v2
+    url: http://license.coscl.org.cn/MulanPSL2
+  termsOfService: http://swagger.io/terms/
+  title: 统一运维入口
+  version: "1.0"
+paths:
+  /file/upload/kubeconfig:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Upload a file with optional description
+      parameters:
+      - description: The file to upload
+        in: formData
+        name: file
+        required: true
+        type: file
+      - description: k8s name
+        in: formData
+        name: cluster_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/proto.FileUploadResult'
+      summary: Upload a file
+      tags:
+      - kubeconfig文件上传
+swagger: "2.0"
