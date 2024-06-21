@@ -3,8 +3,11 @@ package router
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
+	swaggerFiles "github.com/swaggo/files"
+	gs "github.com/swaggo/gin-swagger"
 	"net/http"
 	"ops-entry/controllers"
+	_ "ops-entry/docs"
 	"ops-entry/middlewares"
 	"os"
 )
@@ -22,6 +25,7 @@ func NewRouter() *gin.Engine {
 	router.Use(middlewares.Logger())   // logger middlerware
 	router.Use(middlewares.Recovery()) // panic in single request instead of whole project
 	router.GET("/", RootDirHandler)
+	router.GET("/swagger/*any", gs.WrapHandler(swaggerFiles.Handler))
 	// api for file
 	fileRouter := router.Group("/file")
 	{
