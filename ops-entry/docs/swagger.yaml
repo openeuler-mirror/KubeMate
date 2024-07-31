@@ -9,7 +9,7 @@ definitions:
       request_id:
         type: string
     type: object
-host: 0.0.0.0:8080
+host: 0.0.0.0:9090
 info:
   contact:
     email: https://gitee.com/openeuler/KubeMate
@@ -23,6 +23,32 @@ info:
   title: 统一运维入口
   version: "1.0"
 paths:
+  /file/upload/clusterconfig:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Upload a file with optional description
+      parameters:
+      - description: The cluster config file to upload
+        in: formData
+        name: file
+        required: true
+        type: file
+      - description: k8s name
+        in: formData
+        name: cluster_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/proto.FileUploadResult'
+      summary: Upload a cluster config file
+      tags:
+      - 集群配置文件上传
   /file/upload/kubeconfig:
     post:
       consumes:
