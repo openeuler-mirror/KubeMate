@@ -1,15 +1,16 @@
 package router
 
 import (
-	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
-	swaggerFiles "github.com/swaggo/files"
-	gs "github.com/swaggo/gin-swagger"
 	"net/http"
 	"ops-entry/controllers"
 	_ "ops-entry/docs"
 	"ops-entry/middlewares"
 	"os"
+
+	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
+	swaggerFiles "github.com/swaggo/files"
+	gs "github.com/swaggo/gin-swagger"
 )
 
 type ErrResult struct {
@@ -31,6 +32,12 @@ func NewRouter() *gin.Engine {
 	{
 		fileRouter.POST("/upload/kubeconfig", controllers.KubeconfigFileUploadHandler)
 	}
+
+	configFilesRouter := router.Group("/file")
+	{
+		configFilesRouter.POST("/upload/clusterconfig", controllers.ClusterconfigFileUploadHandler)
+	}
+
 	return router
 }
 

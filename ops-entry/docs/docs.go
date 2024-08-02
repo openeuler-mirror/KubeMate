@@ -24,6 +24,45 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/file/upload/clusterconfig": {
+            "post": {
+                "description": "Upload a file with optional description",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "集群配置文件上传"
+                ],
+                "summary": "Upload a cluster config file",
+                "parameters": [
+                    {
+                        "type": "file",
+                        "description": "The cluster config file to upload",
+                        "name": "file",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "k8s name",
+                        "name": "cluster_id",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/proto.FileUploadResult"
+                        }
+                    }
+                }
+            }
+        },
         "/file/upload/kubeconfig": {
             "post": {
                 "description": "Upload a file with optional description",
@@ -85,7 +124,7 @@ const docTemplate = `{
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
-	Host:             "0.0.0.0:8080",
+	Host:             "0.0.0.0:9090",
 	BasePath:         "/swagger/index.html",
 	Schemes:          []string{},
 	Title:            "统一运维入口",

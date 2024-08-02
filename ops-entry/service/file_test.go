@@ -27,7 +27,7 @@ func TestUploadFile(t *testing.T) {
 	}
 	allowedExts := []string{constValue.YamlExt, constValue.YmlExt, constValue.Kubeconfig} // 允许的文件扩展名
 
-	//curl -F "file=@/path/to/your/kubeconfig" http://localhost:8080/upload
+	//curl -F "file=@/path/to/your/kubeconfig" http://localhost:9090/upload
 	t.Run("UploadFileExtension", func(t *testing.T) {
 		ext := filepath.Ext(param.File.Filename)
 		if len(ext) == 0 {

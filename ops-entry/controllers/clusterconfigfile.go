@@ -1,3 +1,14 @@
+/*
+ * Copyright 2024 KylinSoft  Co., Ltd.
+ * KubeMate is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *     http://license.coscl.org.cn/MulanPSL2
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY OR FIT FOR A PARTICULAR
+ * PURPOSE.
+ * See the Mulan PSL v2 for more details.
+ */
 package controllers
 
 import (
@@ -12,18 +23,18 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// KubeconfigFileUploadHandler
+// ClusterconfigFileUploadHandler
 //
-//	@Summary		Upload a file
+//	@Summary		Upload a cluster config file
 //	@Description	Upload a file with optional description
-//	@Tags			kubeconfig文件上传
+//	@Tags			集群配置文件上传
 //	@Accept			multipart/form-data
 //	@Produce		json
-//	@Param			file		formData	file	true	"The file to upload"
+//	@Param			file		formData	file	true	"The cluster config file to upload"
 //	@Param			cluster_id	formData	string	true	"k8s name"
 //	@Success		200			{object}	proto.FileUploadResult
-//	@Router			/file/upload/kubeconfig [POST]
-func KubeconfigFileUploadHandler(gc *gin.Context) {
+//	@Router			/file/upload/clusterconfig [POST]
+func ClusterconfigFileUploadHandler(gc *gin.Context) {
 	requestId := gc.GetHeader("Request-Id")
 	c := util.CreateContext(requestId)
 	if len(requestId) == 0 {
@@ -45,8 +56,14 @@ func KubeconfigFileUploadHandler(gc *gin.Context) {
 	}
 
 	param.File, err = gc.FormFile("file")
+	if err != nil {
+		result.Code = util.ErrorCodeInvalidParam
+		result.Msg = "Invalid parameters: file is empty"
+		logrus.Errorf(c.P()+"Invalid parameters: file is empty: %v", err)
+		gc.JSON(http.StatusOK, result)
+		return
+	}
 
-	// 将每次通过接口访问的参数记录下来，便于排查 问题。
 	byteParam, _ := json.Marshal(param)
 	logrus.Infof(c.P()+"FileUploadHandler param: %s", string(byteParam))
 
@@ -74,9 +91,9 @@ func KubeconfigFileUploadHandler(gc *gin.Context) {
 		return
 	}
 
-	err = service.UploadFile(c, param)
+	err = service.UploadClusterConfigFile(c, param)
 	if err != nil {
-		logrus.Errorf(c.P()+"UploadFile failed: %s", err.Error())
+		logrus.Errorf(c.P()+"UploadClusterConfigFile failed: %s", err.Error())
 		result.Code = util.ErrorCodeFail
 		result.Msg = err.Error()
 		gc.JSON(http.StatusOK, result)

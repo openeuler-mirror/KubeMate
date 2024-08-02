@@ -13,28 +13,29 @@ package main
 
 import (
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
 	"ops-entry/constValue"
 	"ops-entry/db"
 	"ops-entry/log"
 	router2 "ops-entry/router"
+
+	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 )
 
-// @title 统一运维入口
-// @version 1.0
-// @description 接受运维管理平台的请求，进行os以云原生的方式进行升级
-// @termsOfService http://swagger.io/terms/
+//	@title			统一运维入口
+//	@version		1.0
+//	@description	接受运维管理平台的请求，进行os以云原生的方式进行升级
+//	@termsOfService	http://swagger.io/terms/
 
-// @contact.name https://gitee.com/openeuler/KubeMate
-// @contact.url https://gitee.com/openeuler/KubeMate
-// @contact.email https://gitee.com/openeuler/KubeMate
+//	@contact.name	https://gitee.com/openeuler/KubeMate
+//	@contact.url	https://gitee.com/openeuler/KubeMate
+//	@contact.email	https://gitee.com/openeuler/KubeMate
 
-// @license.name Mulan PSL v2
-// @license.url  http://license.coscl.org.cn/MulanPSL2
+//	@license.name	Mulan PSL v2
+//	@license.url	http://license.coscl.org.cn/MulanPSL2
 
-// @host 0.0.0.0:8080
-// @BasePath /swagger/index.html
+//	@host		0.0.0.0:9090
+//	@BasePath	/swagger/index.html
 
 func main() {
 	log.InitLog()
@@ -48,7 +49,7 @@ func main() {
 	listen := fmt.Sprintf("%s:%d", constValue.ListenIP, constValue.ListenPort)
 	logrus.Infof("Logger and gin inited, GinIsDebug[%v], listenIp[%s] listenPort[%d]", gin.IsDebugging(), constValue.ListenIP, constValue.ListenPort)
 
-	err = router.Run(listen) // listen and serve on 0.0.0.0:8080
+	err = router.Run(listen) // listen and serve on 0.0.0.0:9090
 	if err != nil {
 		logrus.Errorf("listen err: %s", err.Error())
 	}

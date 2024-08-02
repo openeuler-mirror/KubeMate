@@ -3,7 +3,6 @@ package util
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 )
 
@@ -24,14 +23,8 @@ func CreatePath(path string) error {
 		return fmt.Errorf("invalid path: %s", path)
 	}
 
-	// 使用filepath.Dir获取路径的父目录
-	parentDir := filepath.Dir(path)
-
-	// 如果父目录不存在，则递归创建它
-	if _, err := os.Stat(parentDir); os.IsNotExist(err) {
-		if err := os.MkdirAll(parentDir, 0755); err != nil {
-			return err
-		}
+	if err := os.MkdirAll(path, 0755); err != nil {
+		return err
 	}
 
 	return nil

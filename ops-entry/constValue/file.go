@@ -9,3 +9,5 @@ const Kubeconfig = "kubeconfig"
 
 const KubeconfigSavePath = ".kube"
 const KubeconfigFileName = "config"
+
+const ClusterConfigSavePath = "nkd"
