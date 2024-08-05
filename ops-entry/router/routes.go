@@ -1,3 +1,14 @@
+/*
+ * Copyright 2024 KylinSoft  Co., Ltd.
+ * KubeMate is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *     http://license.coscl.org.cn/MulanPSL2
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY OR FIT FOR A PARTICULAR
+ * PURPOSE.
+ * See the Mulan PSL v2 for more details.
+ */
 package router
 
 import (
@@ -28,14 +39,16 @@ func NewRouter() *gin.Engine {
 	router.GET("/", RootDirHandler)
 	router.GET("/swagger/*any", gs.WrapHandler(swaggerFiles.Handler))
 	// api for file
-	fileRouter := router.Group("/file")
+	kubeconfigRouter := router.Group("/kubeconfig")
 	{
-		fileRouter.POST("/upload/kubeconfig", controllers.KubeconfigFileUploadHandler)
+		kubeconfigRouter.POST("/upload", controllers.KubeconfigFileUploadHandler)
+		kubeconfigRouter.DELETE("/:cluster_id", controllers.KubeconfigFileDeleteHandler)
 	}
 
-	configFilesRouter := router.Group("/file")
+	clusterConfigRouter := router.Group("/clusterconfig")
 	{
-		configFilesRouter.POST("/upload/clusterconfig", controllers.ClusterconfigFileUploadHandler)
+		clusterConfigRouter.POST("/upload", controllers.ClusterconfigFileUploadHandler)
+		clusterConfigRouter.DELETE("/:cluster_id", controllers.ClusterconfigFileDeleteHandler)
 	}
 
 	return router

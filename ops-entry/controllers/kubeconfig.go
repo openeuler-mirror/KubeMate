@@ -23,24 +23,24 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// ClusterconfigFileUploadHandler
+// KubeconfigFileUploadHandler 上传kubeconfig文件
 //
-//	@Summary		Upload a cluster config file
+//	@Summary		Upload a kubeconfig file
 //	@Description	Upload a file with optional description
-//	@Tags			集群配置文件上传
+//	@Tags			kubeconfig文件
 //	@Accept			multipart/form-data
 //	@Produce		json
-//	@Param			file		formData	file	true	"The cluster config file to upload"
+//	@Param			file		formData	file	true	"The kubeconfig file to upload"
 //	@Param			cluster_id	formData	string	true	"k8s name"
-//	@Success		200			{object}	proto.FileUploadResult
-//	@Router			/file/upload/clusterconfig [POST]
-func ClusterconfigFileUploadHandler(gc *gin.Context) {
+//	@Success		200			{object}	proto.FileResult "Successful file upload"
+//	@Router			/kubeconfig/upload [POST]
+func KubeconfigFileUploadHandler(gc *gin.Context) {
 	requestId := gc.GetHeader("Request-Id")
 	c := util.CreateContext(requestId)
 	if len(requestId) == 0 {
 		gc.Request.Header.Set("Request-Id", c.RequestId)
 	}
-	var result proto.FileUploadResult
+	var result proto.FileResult
 	result.Code = 0
 	result.Msg = "success"
 	result.RequestId = c.RequestId
@@ -56,14 +56,8 @@ func ClusterconfigFileUploadHandler(gc *gin.Context) {
 	}
 
 	param.File, err = gc.FormFile("file")
-	if err != nil {
-		result.Code = util.ErrorCodeInvalidParam
-		result.Msg = "Invalid parameters: file is empty"
-		logrus.Errorf(c.P()+"Invalid parameters: file is empty: %v", err)
-		gc.JSON(http.StatusOK, result)
-		return
-	}
 
+	// 将每次通过接口访问的参数记录下来，便于排查 问题。
 	byteParam, _ := json.Marshal(param)
 	logrus.Infof(c.P()+"FileUploadHandler param: %s", string(byteParam))
 
@@ -91,9 +85,9 @@ func ClusterconfigFileUploadHandler(gc *gin.Context) {
 		return
 	}
 
-	err = service.UploadClusterConfigFile(c, param)
+	err = service.UploadKubeconfigFile(c, param)
 	if err != nil {
-		logrus.Errorf(c.P()+"UploadClusterConfigFile failed: %s", err.Error())
+		logrus.Errorf(c.P()+"UploadFile failed: %s", err.Error())
 		result.Code = util.ErrorCodeFail
 		result.Msg = err.Error()
 		gc.JSON(http.StatusOK, result)
@@ -101,5 +95,27 @@ func ClusterconfigFileUploadHandler(gc *gin.Context) {
 	}
 
 	gc.JSON(http.StatusOK, result)
+	return
+}
+
+// KubeconfigFileDeleteHandler 删除kubeconfig文件
+//
+//	@Summary		Delete a kubeconfig file
+//	@Description	Delete a file with optional description
+//	@Tags			kubeconfig文件
+//	@Accept			json
+//	@Produce		json
+//	@Param			cluster_id	path	string	true	"k8s name"
+//	@Success		204			"No Content - Indicates successful deletion"
+//	@Router			/kubeconfig/{cluster_id} [DELETE]
+func KubeconfigFileDeleteHandler(gc *gin.Context) {
+	requestId := gc.Param("cluster_id")
+	c := util.CreateContext(requestId)
+	if len(requestId) == 0 {
+		gc.Request.Header.Set("Request-Id", c.RequestId)
+	}
+	service.DeleteKubeconfigFile(c, requestId)
+
+	gc.Status(http.StatusNoContent)
 	return
 }

@@ -1,6 +1,6 @@
 basePath: /swagger/index.html
 definitions:
-  proto.FileUploadResult:
+  proto.FileResult:
     properties:
       code:
         type: integer
@@ -23,7 +23,22 @@ info:
   title: 统一运维入口
   version: "1.0"
 paths:
-  /file/upload/clusterconfig:
+  /clusterconfig/{cluster_id}:
+    delete:
+      description: Delete a cluster config file with optional description
+      parameters:
+      - description: k8s name
+        in: path
+        name: cluster_id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content - Indicates successful deletion
+      summary: Delete a cluster config file
+      tags:
+      - 集群配置文件
+  /clusterconfig/upload:
     post:
       consumes:
       - multipart/form-data
@@ -39,23 +54,51 @@ paths:
         name: cluster_id
         required: true
         type: string
+      - description: The type of the uploaded file (e.g., 'crfile', 'configfile')
+        in: formData
+        name: type
+        required: true
+        type: string
+      - description: The JSON string containing labels for the uploaded file
+        in: formData
+        name: labels
+        type: string
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/proto.FileUploadResult'
+            $ref: '#/definitions/proto.FileResult'
       summary: Upload a cluster config file
       tags:
-      - 集群配置文件上传
-  /file/upload/kubeconfig:
+      - 集群配置文件
+  /kubeconfig/{cluster_id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a file with optional description
+      parameters:
+      - description: k8s name
+        in: path
+        name: cluster_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content - Indicates successful deletion
+      summary: Delete a kubeconfig file
+      tags:
+      - kubeconfig文件
+  /kubeconfig/upload:
     post:
       consumes:
       - multipart/form-data
       description: Upload a file with optional description
       parameters:
-      - description: The file to upload
+      - description: The kubeconfig file to upload
         in: formData
         name: file
         required: true
@@ -69,10 +112,10 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Successful file upload
           schema:
-            $ref: '#/definitions/proto.FileUploadResult'
-      summary: Upload a file
+            $ref: '#/definitions/proto.FileResult'
+      summary: Upload a kubeconfig file
       tags:
-      - kubeconfig文件上传
+      - kubeconfig文件
 swagger: "2.0"
