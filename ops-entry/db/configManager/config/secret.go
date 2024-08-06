@@ -4,13 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"ops-entry/common/util"
+	"ops-entry/constValue"
+	"ops-entry/db/configManager"
+
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"ops-entry/common/util"
-	"ops-entry/constValue"
-	"ops-entry/db/configManager"
 )
 
 type SecretImpl struct {
@@ -104,10 +105,12 @@ func (s *SecretImpl) Create(ctx context.Context, opts metav1.CreateOptions, data
 	newSecret := secret.DeepCopy()
 	newSecret.StringData = scData
 	newSecret.Type = s.SecretType
+	newSecret.Labels = s.LabelData
+
 	// 使用客户端更新Secrets
-	_, err = configManager.KCS.ClientSet.CoreV1().Secrets(secret.Namespace).Update(ctx, secret, metav1.UpdateOptions{})
+	_, err = configManager.KCS.ClientSet.CoreV1().Secrets(secret.Namespace).Update(ctx, newSecret, metav1.UpdateOptions{})
 	if err != nil {
-		logrus.Errorf("update Secrets failed: [sc:%+v],[err:%v]", secret, err)
+		logrus.Errorf("update Secrets failed: [sc:%+v],[err:%v]", newSecret, err)
 		return err
 	}
 
@@ -220,30 +223,40 @@ func (s *SecretImpl) Update(ctx context.Context, opts metav1.UpdateOptions, data
 }
 
 func (s *SecretImpl) Delete(ctx context.Context, opts metav1.DeleteOptions) error {
-	options := s.GetListOptions(s.LabelData)
-	list, err := s.List(ctx, options)
+	err := configManager.KCS.ClientSet.CoreV1().Secrets(s.NameSpace).Delete(ctx, s.SecretName, opts)
 	if err != nil {
-		logrus.Errorf("empty SecretImpl data：[err:%+v]", err)
+		logrus.Errorf("delete Secret by name failed: [name:%s],[err:%+v]", s.SecretName, err)
 		return err
 	}
-	secretList, ok := list.(*corev1.SecretList)
-	if !ok {
-		logrus.Error("type Secret conversion failed")
-		return errors.New("type Secret conversion failed")
-	}
+	logrus.Infof("Secret deleted successfully: [name:%s]", s.SecretName)
 
-	if len(secretList.Items) < 1 {
-		logrus.Error("empty Secret data")
-		return errors.New("empty Secret data")
-	}
-
-	// 遍历 secret 列表并执行删除操作
-	for _, sc := range secretList.Items {
-		err := configManager.KCS.ClientSet.CoreV1().Secrets(sc.Namespace).Delete(context.TODO(), sc.Name, opts)
+	if len(s.LabelData) > 0 {
+		options := s.GetListOptions(s.LabelData)
+		list, err := s.List(ctx, options)
 		if err != nil {
-			logrus.Errorf("delete Secrets failed: [cm:%+v],[err:%v]", sc, err)
-			continue
+			logrus.Errorf("empty SecretImpl data:[err:%+v]", err)
+			return err
+		}
+		secretList, ok := list.(*corev1.SecretList)
+		if !ok {
+			logrus.Error("type Secret conversion failed")
+			return errors.New("type Secret conversion failed")
+		}
+
+		if len(secretList.Items) < 1 {
+			logrus.Error("empty Secret data")
+			return errors.New("empty Secret data")
+		}
+
+		// 遍历 secret 列表并执行删除操作
+		for _, sc := range secretList.Items {
+			err := configManager.KCS.ClientSet.CoreV1().Secrets(sc.Namespace).Delete(context.TODO(), sc.Name, opts)
+			if err != nil {
+				logrus.Errorf("delete Secrets failed: [cm:%+v],[err:%v]", sc, err)
+				continue
+			}
 		}
 	}
-	return err
+
+	return nil
 }

@@ -18,7 +18,7 @@
     "host": "0.0.0.0:9090",
     "basePath": "/swagger/index.html",
     "paths": {
-        "/file/upload/clusterconfig": {
+        "/clusterconfig/upload": {
             "post": {
                 "description": "Upload a file with optional description",
                 "consumes": [
@@ -28,7 +28,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "集群配置文件上传"
+                    "集群配置文件"
                 ],
                 "summary": "Upload a cluster config file",
                 "parameters": [
@@ -45,19 +45,55 @@
                         "name": "cluster_id",
                         "in": "formData",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "The type of the uploaded file (e.g., 'crfile', 'configfile')",
+                        "name": "type",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "The JSON string containing labels for the uploaded file",
+                        "name": "labels",
+                        "in": "formData"
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/proto.FileUploadResult"
+                            "$ref": "#/definitions/proto.FileResult"
                         }
                     }
                 }
             }
         },
-        "/file/upload/kubeconfig": {
+        "/clusterconfig/{cluster_id}": {
+            "delete": {
+                "description": "Delete a cluster config file with optional description",
+                "tags": [
+                    "集群配置文件"
+                ],
+                "summary": "Delete a cluster config file",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "k8s name",
+                        "name": "cluster_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content - Indicates successful deletion"
+                    }
+                }
+            }
+        },
+        "/kubeconfig/upload": {
             "post": {
                 "description": "Upload a file with optional description",
                 "consumes": [
@@ -67,13 +103,13 @@
                     "application/json"
                 ],
                 "tags": [
-                    "kubeconfig文件上传"
+                    "kubeconfig文件"
                 ],
-                "summary": "Upload a file",
+                "summary": "Upload a kubeconfig file",
                 "parameters": [
                     {
                         "type": "file",
-                        "description": "The file to upload",
+                        "description": "The kubeconfig file to upload",
                         "name": "file",
                         "in": "formData",
                         "required": true
@@ -88,17 +124,46 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Successful file upload",
                         "schema": {
-                            "$ref": "#/definitions/proto.FileUploadResult"
+                            "$ref": "#/definitions/proto.FileResult"
                         }
+                    }
+                }
+            }
+        },
+        "/kubeconfig/{cluster_id}": {
+            "delete": {
+                "description": "Delete a file with optional description",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "kubeconfig文件"
+                ],
+                "summary": "Delete a kubeconfig file",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "k8s name",
+                        "name": "cluster_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content - Indicates successful deletion"
                     }
                 }
             }
         }
     },
     "definitions": {
-        "proto.FileUploadResult": {
+        "proto.FileResult": {
             "type": "object",
             "properties": {
                 "code": {
