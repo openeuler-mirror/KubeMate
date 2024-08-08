@@ -4,9 +4,23 @@ import (
 	"mime/multipart"
 )
 
-// FileUploadResult kubeconfig上传接口响应数据
+// FileResult 接口响应数据
 type FileResult struct {
 	BaseResult
+}
+
+// KubeConfigResult kubeconfig文件数据
+
+type KubeConfigResult struct {
+	Name string `json:"name"`
+	Data string `json:"data"`
+}
+
+// ClusterConfigResult clusterconfig文件数据
+
+type ClusterConfigResult struct {
+	Name string `json:"name"`
+	Data string `json:"data"`
 }
 
 type FileType string

@@ -21,6 +21,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
 // KubeconfigFileUploadHandler 上传kubeconfig文件
@@ -117,5 +118,41 @@ func KubeconfigFileDeleteHandler(gc *gin.Context) {
 	service.DeleteKubeconfigFile(c, requestId)
 
 	gc.Status(http.StatusNoContent)
+	return
+}
+
+// KubeconfigFileQueryHandler 查询集群配置文件
+// @Summary 	Query a kubeconfig file
+// @Description Query a kubeconfig file by cluster ID
+// @Tags 		kubeconfig文件
+// @Param 		cluster_id 	path 		string true "k8s cluster ID"
+// @Success		204			"No Content - Indicates successful get"
+// @Router 		/kubeconfig/{cluster_id} [GET]
+func KubeconfigFileQueryHandler(gc *gin.Context) {
+	var (
+		result         proto.FileResult
+		kubeconfigInfo proto.KubeConfigResult
+	)
+	requestId := gc.Param("cluster_id")
+	c := util.CreateContext(requestId)
+	if len(requestId) == 0 {
+		gc.Request.Header.Set("Request-Id", c.RequestId)
+	}
+	result.Code = 0
+	result.Msg = "success"
+	result.RequestId = c.RequestId
+
+	secret, err := service.QueryKubeconfigFile(c, requestId)
+	if err != nil && !k8serrors.IsNotFound(err) {
+		logrus.Errorf("failed to get secret to cluster_id: %s: %v", requestId, err)
+		result.Code = util.ErrorCodeFail
+		result.Msg = err.Error()
+		gc.JSON(http.StatusOK, result)
+		return
+	}
+	kubeconfigInfo.Name = secret.Name
+	kubeconfigInfo.Data = string(secret.Data[constValue.Kubeconfig])
+	gc.JSON(http.StatusOK, kubeconfigInfo)
+
 	return
 }

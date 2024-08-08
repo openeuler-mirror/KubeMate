@@ -77,6 +77,30 @@ const docTemplate = `{
             }
         },
         "/clusterconfig/{cluster_id}": {
+            "get": {
+                "description": "Query a clusterconfig file by cluster ID",
+                "tags": [
+                    "集群配置文件"
+                ],
+                "summary": "Query a clusterconfig file",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "k8s cluster ID",
+                        "name": "cluster_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/proto.FileResult"
+                        }
+                    }
+                }
+            },
             "delete": {
                 "description": "Delete a cluster config file with optional description",
                 "tags": [
@@ -139,6 +163,27 @@ const docTemplate = `{
             }
         },
         "/kubeconfig/{cluster_id}": {
+            "get": {
+                "description": "Query a kubeconfig file by cluster ID",
+                "tags": [
+                    "kubeconfig文件"
+                ],
+                "summary": "Query a kubeconfig file",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "k8s cluster ID",
+                        "name": "cluster_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content - Indicates successful get"
+                    }
+                }
+            },
             "delete": {
                 "description": "Delete a file with optional description",
                 "consumes": [

@@ -28,6 +28,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -112,6 +113,16 @@ func DeleteClusterConfigFile(c util.Context, clusterID string) error {
 	}
 	sr := config.NewSecretImpl(constValue.NameSpace, secretName, nil, "")
 	return sr.Delete(context.TODO(), metav1.DeleteOptions{})
+}
+
+func QueryClusterConfigFile(c util.Context, clusterID string) (*corev1.Secret, error) {
+	secretName := clusterID + constValue.ClusterconfigPrefix
+	if !util.IsValidResourceName(secretName) {
+		logrus.Errorf(c.P()+"invalid secret name: %s\n", secretName)
+		return nil, errors.New("invalid secret name")
+	}
+	sr := config.NewSecretImpl(constValue.NameSpace, secretName, nil, "")
+	return sr.Get(context.TODO(), metav1.GetOptions{})
 }
 
 // validYamlConfig 检查给定的内容是否是有效的 YAML 配置文件

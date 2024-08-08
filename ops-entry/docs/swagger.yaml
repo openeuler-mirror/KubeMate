@@ -38,6 +38,22 @@ paths:
       summary: Delete a cluster config file
       tags:
       - 集群配置文件
+    get:
+      description: Query a clusterconfig file by cluster ID
+      parameters:
+      - description: k8s cluster ID
+        in: path
+        name: cluster_id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/proto.FileResult'
+      summary: Query a clusterconfig file
+      tags:
+      - 集群配置文件
   /clusterconfig/upload:
     post:
       consumes:
@@ -90,6 +106,20 @@ paths:
         "204":
           description: No Content - Indicates successful deletion
       summary: Delete a kubeconfig file
+      tags:
+      - kubeconfig文件
+    get:
+      description: Query a kubeconfig file by cluster ID
+      parameters:
+      - description: k8s cluster ID
+        in: path
+        name: cluster_id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content - Indicates successful get
+      summary: Query a kubeconfig file
       tags:
       - kubeconfig文件
   /kubeconfig/upload:

@@ -114,6 +114,16 @@ func DeleteKubeconfigFile(c util.Context, clusterID string) error {
 	return sr.Delete(context.TODO(), metav1.DeleteOptions{})
 }
 
+func QueryKubeconfigFile(c util.Context, clusterID string) (*corev1.Secret, error) {
+	secretName := clusterID + constValue.KubeconfigPrefix
+	if !util.IsValidResourceName(secretName) {
+		logrus.Errorf(c.P()+"invalid secret name: %s\n", secretName)
+		return nil, errors.New("invalid secret name")
+	}
+	sr := config.NewSecretImpl(constValue.NameSpace, secretName, nil, "")
+	return sr.Get(context.TODO(), metav1.GetOptions{})
+}
+
 // saveKubeConfig2Secret 保存kubeconfig到secret
 func saveKubeConfig2Secret(c util.Context, clusterID string, kubeconfigBytes []byte, labelData map[string]string) error {
 	encodedConfig := base64.StdEncoding.EncodeToString(kubeconfigBytes)
