@@ -12,6 +12,7 @@
 package service
 
 import (
+	"bytes"
 	"context"
 	"encoding/base64"
 	"errors"
@@ -124,6 +125,62 @@ func QueryKubeconfigFile(c util.Context, clusterID string) (*corev1.Secret, erro
 	return sr.Get(context.TODO(), metav1.GetOptions{})
 }
 
+func UpdateKubeconfigFile(c util.Context, param *proto.FileUpdateParam) error {
+	allowedExts := []string{constValue.YamlExt, constValue.YmlExt, constValue.KubeconfigExt}
+	ext := filepath.Ext(param.File.Filename)
+	if len(ext) > 0 && !util.IsAllowedExtension(ext, allowedExts) {
+		logrus.Errorf(c.P()+"Not allowed file extension:%v", param.File.Filename)
+		return errors.New("Not allowed file extension" + param.File.Filename)
+	}
+
+	open, err := param.File.Open()
+	if err != nil {
+		logrus.Errorf(c.P()+"Error opening file:%v", err)
+		return err
+	}
+
+	content, err := io.ReadAll(open)
+	if err != nil {
+		logrus.Errorf(c.P()+"Error reading file:%v", err)
+		return err
+	}
+
+	isValid := validKubeConfig(c, content)
+	if !isValid {
+		logrus.Errorf(c.P() + "invalid KubeConfig file")
+		return errors.New("invalid KubeConfig file")
+	}
+
+	currentUser, err := user.Current()
+	if err != nil {
+		logrus.Errorf(c.P()+"Error getting current user:%v", err)
+		return err
+	}
+
+	KubeConfigSavePath := filepath.Join(currentUser.HomeDir, constValue.KubeconfigSavePath)
+	err = util.CreatePath(KubeConfigSavePath)
+	if err != nil {
+		logrus.Errorf(c.P()+"Error creating path:%v", err)
+		return err
+	}
+
+	dst := filepath.Join(KubeConfigSavePath, fmt.Sprintf("%s-%s", param.ClusterId, param.File.Filename))
+
+	outFile, err := os.Create(dst)
+	if err != nil {
+		logrus.Errorf(c.P()+"Error creating file:%v", err)
+		return errors.New("Error creating file:" + err.Error())
+	}
+	defer outFile.Close()
+
+	if _, err := io.Copy(outFile, bytes.NewReader(content)); err != nil {
+		logrus.Errorf(c.P()+"Error copying file:%v", err)
+		return errors.New("Error copying file:" + err.Error())
+	}
+
+	return updateKubeConfig2Secret(c, param.ClusterId, content, nil)
+}
+
 // saveKubeConfig2Secret 保存kubeconfig到secret
 func saveKubeConfig2Secret(c util.Context, clusterID string, kubeconfigBytes []byte, labelData map[string]string) error {
 	encodedConfig := base64.StdEncoding.EncodeToString(kubeconfigBytes)
@@ -137,4 +194,19 @@ func saveKubeConfig2Secret(c util.Context, clusterID string, kubeconfigBytes []b
 	}
 	sr := config.NewSecretImpl(constValue.NameSpace, secretName, labelData, corev1.ServiceAccountKubeconfigKey)
 	return sr.Create(context.TODO(), metav1.CreateOptions{}, kubeconfigData)
+}
+
+// updateKubeConfig2Secret 保存kubeconfig到secret
+func updateKubeConfig2Secret(c util.Context, clusterID string, kubeconfigBytes []byte, labelData map[string]string) error {
+	encodedConfig := base64.StdEncoding.EncodeToString(kubeconfigBytes)
+	kubeconfigData := map[string]string{
+		constValue.Kubeconfig: string(encodedConfig),
+	}
+	secretName := clusterID + constValue.KubeconfigPrefix
+	if !util.IsValidResourceName(secretName) {
+		logrus.Errorf(c.P()+"invalid secret name: %s\n", secretName)
+		return errors.New("invalid secret name")
+	}
+	sr := config.NewSecretImpl(constValue.NameSpace, secretName, labelData, corev1.ServiceAccountKubeconfigKey)
+	return sr.Update(context.TODO(), metav1.UpdateOptions{}, kubeconfigData)
 }

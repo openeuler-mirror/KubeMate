@@ -44,6 +44,7 @@ func NewRouter() *gin.Engine {
 		kubeconfigRouter.POST("/upload", controllers.KubeconfigFileUploadHandler)
 		kubeconfigRouter.DELETE("/:cluster_id", controllers.KubeconfigFileDeleteHandler)
 		kubeconfigRouter.GET("/:cluster_id", controllers.KubeconfigFileQueryHandler)
+		kubeconfigRouter.PUT("/update", controllers.KubeconfigFileUpdateHandler)
 	}
 
 	clusterConfigRouter := router.Group("/clusterconfig")
@@ -51,6 +52,7 @@ func NewRouter() *gin.Engine {
 		clusterConfigRouter.POST("/upload", controllers.ClusterconfigFileUploadHandler)
 		clusterConfigRouter.DELETE("/:cluster_id", controllers.ClusterconfigFileDeleteHandler)
 		clusterConfigRouter.GET("/:cluster_id", controllers.ClusterconfigFileQueryHandler)
+		clusterConfigRouter.PUT("/update", controllers.ClusterconfigFileUpdateHandler)
 	}
 
 	return router
