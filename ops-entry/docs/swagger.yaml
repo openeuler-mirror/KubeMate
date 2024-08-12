@@ -32,6 +32,11 @@ paths:
         name: cluster_id
         required: true
         type: string
+      - description: The JSON string containing labels to filter the files to delete.
+          Optional.
+        in: query
+        name: labels
+        type: string
       responses:
         "204":
           description: No Content - Indicates successful deletion
@@ -45,6 +50,11 @@ paths:
         in: path
         name: cluster_id
         required: true
+        type: string
+      - description: The JSON string containing labels to filter the files to delete.
+          Optional.
+        in: query
+        name: labels
         type: string
       responses:
         "200":

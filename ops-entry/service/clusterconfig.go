@@ -106,8 +106,19 @@ func UploadClusterConfigFile(c util.Context, param *proto.FileUploadParam) error
 	return saveClusterConfig2Secret(c, param.ClusterId, content, labels)
 }
 
-func DeleteClusterConfigFile(c util.Context, clusterID string) error {
+func DeleteClusterConfigFile(c util.Context, clusterID string, labels string) error {
 	secretName := clusterID + constValue.ClusterconfigPrefix
+	if labels != "" {
+		deleteLabels, err := parseLabels(labels)
+		if err != nil {
+			return err
+		}
+
+		for key, value := range deleteLabels {
+			secretName = secretName + "-" + key + "-" + value
+		}
+	}
+
 	if !util.IsValidResourceName(secretName) {
 		logrus.Errorf(c.P()+"invalid secret name: %s\n", secretName)
 		return errors.New("invalid secret name")
@@ -116,8 +127,19 @@ func DeleteClusterConfigFile(c util.Context, clusterID string) error {
 	return sr.Delete(context.TODO(), metav1.DeleteOptions{})
 }
 
-func QueryClusterConfigFile(c util.Context, clusterID string) (*corev1.Secret, error) {
+func QueryClusterConfigFile(c util.Context, clusterID string, labels string) (*corev1.Secret, error) {
 	secretName := clusterID + constValue.ClusterconfigPrefix
+	if labels != "" {
+		deleteLabels, err := parseLabels(labels)
+		if err != nil {
+			return nil, err
+		}
+
+		for key, value := range deleteLabels {
+			secretName = secretName + "-" + key + "-" + value
+		}
+	}
+
 	if !util.IsValidResourceName(secretName) {
 		logrus.Errorf(c.P()+"invalid secret name: %s\n", secretName)
 		return nil, errors.New("invalid secret name")

@@ -135,6 +135,12 @@ const docTemplate = `{
                         "name": "cluster_id",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "The JSON string containing labels to filter the files to delete. Optional.",
+                        "name": "labels",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -159,6 +165,12 @@ const docTemplate = `{
                         "name": "cluster_id",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "The JSON string containing labels to filter the files to delete. Optional.",
+                        "name": "labels",
+                        "in": "query"
                     }
                 ],
                 "responses": {
