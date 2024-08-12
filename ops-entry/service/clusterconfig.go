@@ -12,6 +12,7 @@
 package service
 
 import (
+	"bytes"
 	"context"
 	"encoding/base64"
 	"encoding/json"
@@ -84,7 +85,7 @@ func UploadClusterConfigFile(c util.Context, param *proto.FileUploadParam) error
 	}
 	defer outFile.Close()
 
-	if _, err := io.Copy(outFile, open); err != nil {
+	if _, err := io.Copy(outFile, bytes.NewReader(content)); err != nil {
 		logrus.Errorf(c.P()+"Error copying file:%v", err)
 		return errors.New("Error copying file:" + err.Error())
 	}
@@ -125,6 +126,71 @@ func QueryClusterConfigFile(c util.Context, clusterID string) (*corev1.Secret, e
 	return sr.Get(context.TODO(), metav1.GetOptions{})
 }
 
+func UpdateClusterConfigFile(c util.Context, param *proto.FileUpdateParam) error {
+	var updateLabels map[string]string
+	allowedExts := []string{constValue.YamlExt, constValue.YmlExt}
+	ext := filepath.Ext(param.File.Filename)
+
+	if len(ext) > 0 && !util.IsAllowedExtension(ext, allowedExts) {
+		logrus.Errorf(c.P()+"Not allowed file extension:%v", param.File.Filename)
+		return errors.New("Not allowed file extension" + param.File.Filename)
+	}
+
+	open, err := param.File.Open()
+	if err != nil {
+		logrus.Errorf(c.P()+"Error opening file:%v", err)
+		return err
+	}
+	defer open.Close()
+
+	content, err := io.ReadAll(open)
+	if err != nil {
+		logrus.Errorf(c.P()+"Error reading file:%v", err)
+		return err
+	}
+
+	isValid := validYamlConfig(c, content)
+	if !isValid {
+		return errors.New("error: invalid yaml config file")
+	}
+
+	currentUser, err := user.Current()
+	if err != nil {
+		logrus.Errorf(c.P()+"Error getting current user:%v", err)
+		return err
+	}
+
+	savePath := filepath.Join(currentUser.HomeDir, constValue.ClusterConfigSavePath, param.ClusterId)
+	err = util.CreatePath(savePath)
+	if err != nil {
+		logrus.Errorf(c.P()+"Error creating path:%v", err)
+		return err
+	}
+
+	dst := filepath.Join(savePath, fmt.Sprintf("%s-%s", param.ClusterId, param.File.Filename))
+
+	outFile, err := os.Create(dst)
+	if err != nil {
+		logrus.Errorf(c.P()+"Error creating file:%v", err)
+		return errors.New("Error creating file:" + err.Error())
+	}
+	defer outFile.Close()
+
+	if _, err := io.Copy(outFile, bytes.NewReader(content)); err != nil {
+		logrus.Errorf(c.P()+"Error copying file:%v", err)
+		return errors.New("Error copying file:" + err.Error())
+	}
+
+	if param.Labels != "" {
+		updateLabels, err = parseLabels(param.Labels)
+		if err != nil {
+			return err
+		}
+	}
+
+	return updateClusterConfig2Secret(c, param.ClusterId, content, updateLabels)
+}
+
 // validYamlConfig 检查给定的内容是否是有效的 YAML 配置文件
 func validYamlConfig(c util.Context, content []byte) bool {
 	var data interface{}
@@ -163,6 +229,26 @@ func saveClusterConfig2Secret(c util.Context, clusterID string, configBytes []by
 	}
 	sr := config.NewSecretImpl(constValue.NameSpace, secretName, labelData, "")
 	return sr.Create(context.TODO(), metav1.CreateOptions{}, clusterConfigData)
+}
+
+func updateClusterConfig2Secret(c util.Context, clusterID string, configBytes []byte, labelData map[string]string) error {
+	var secretName string
+	encodedConfig := base64.StdEncoding.EncodeToString(configBytes)
+	clusterConfigData := map[string]string{
+		constValue.Clusterconfig: string(encodedConfig),
+	}
+	secretName = clusterID + constValue.ClusterconfigPrefix
+	if len(labelData) > 0 {
+		for key, value := range labelData {
+			secretName = secretName + "-" + key + "-" + value
+		}
+	}
+	if !util.IsValidResourceName(secretName) {
+		logrus.Errorf(c.P()+"invalid secret name: %s\n", secretName)
+		return errors.New("invalid secret name")
+	}
+	sr := config.NewSecretImpl(constValue.NameSpace, secretName, labelData, "")
+	return sr.Update(context.TODO(), metav1.UpdateOptions{}, clusterConfigData)
 }
 
 // 应用Cr资源

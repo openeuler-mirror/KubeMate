@@ -54,6 +54,36 @@ paths:
       summary: Query a clusterconfig file
       tags:
       - 集群配置文件
+  /clusterconfig/update:
+    put:
+      consumes:
+      - multipart/form-data
+      description: Update a file with optional description
+      parameters:
+      - description: The cluster config file to upload
+        in: formData
+        name: file
+        required: true
+        type: file
+      - description: k8s name
+        in: formData
+        name: cluster_id
+        required: true
+        type: string
+      - description: The JSON string containing labels for the uploaded file
+        in: formData
+        name: labels
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/proto.FileResult'
+      summary: Update a cluster config file
+      tags:
+      - 集群配置文件
   /clusterconfig/upload:
     post:
       consumes:
@@ -120,6 +150,32 @@ paths:
         "204":
           description: No Content - Indicates successful get
       summary: Query a kubeconfig file
+      tags:
+      - kubeconfig文件
+  /kubeconfig/update:
+    put:
+      consumes:
+      - multipart/form-data
+      description: Update a file with optional description
+      parameters:
+      - description: The kubeconfig file to upload
+        in: formData
+        name: file
+        required: true
+        type: file
+      - description: k8s name
+        in: formData
+        name: cluster_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successful file update
+          schema:
+            $ref: '#/definitions/proto.FileResult'
+      summary: Update a kubeconfig file
       tags:
       - kubeconfig文件
   /kubeconfig/upload:

@@ -171,3 +171,85 @@ func ClusterconfigFileQueryHandler(gc *gin.Context) {
 
 	return
 }
+
+// ClusterconfigFileUpdateHandler 更新集群配置文件
+//
+// @Summary		Update a cluster config file
+// @Description	Update a file with optional description
+// @Tags		集群配置文件
+// @Accept		multipart/form-data
+// @Produce		json
+// @Param		file		formData	file	true	"The cluster config file to upload"
+// @Param		cluster_id	formData	string	true	"k8s name"
+// @Param 		labels	    formData    string  false	"The JSON string containing labels for the uploaded file"
+// @Success		200			{object}	proto.FileResult
+// @Router		/clusterconfig/update 	[PUT]
+func ClusterconfigFileUpdateHandler(gc *gin.Context) {
+	requestId := gc.GetHeader("Request-Id")
+	c := util.CreateContext(requestId)
+	if len(requestId) == 0 {
+		gc.Request.Header.Set("Request-Id", c.RequestId)
+	}
+	var result proto.FileResult
+	result.Code = 0
+	result.Msg = "success"
+	result.RequestId = c.RequestId
+
+	param := new(proto.FileUpdateParam)
+	err := gc.Bind(param)
+	if err != nil {
+		logrus.Errorf(c.P()+"Invalid params: %s", err.Error())
+		result.Code = util.ErrorCodeInvalidParam
+		result.Msg = err.Error()
+		gc.JSON(http.StatusOK, result)
+		return
+	}
+
+	param.File, err = gc.FormFile("file")
+	if err != nil {
+		result.Code = util.ErrorCodeInvalidParam
+		result.Msg = "Invalid parameters: file is empty"
+		logrus.Errorf(c.P()+"Invalid parameters: file is empty: %v", err)
+		gc.JSON(http.StatusOK, result)
+		return
+	}
+
+	byteParam, _ := json.Marshal(param)
+	logrus.Infof(c.P()+"FileUploadHandler param: %s", string(byteParam))
+
+	if len(param.ClusterId) == 0 || !util.IsValidResourceName(param.ClusterId) {
+		logrus.Errorf(c.P() + "Invalid params:Empty ClusterId or is not a valid resource")
+		result.Code = util.ErrorCodeInvalidParam
+		result.Msg = "Invalid params:Empty ClusterId or is not a valid resource"
+		gc.JSON(http.StatusOK, result)
+		return
+	}
+
+	if param.File == nil {
+		logrus.Errorf(c.P() + "Invalid params:Empty File")
+		result.Code = util.ErrorCodeInvalidParam
+		result.Msg = "Invalid params:Empty File"
+		gc.JSON(http.StatusOK, result)
+		return
+	}
+
+	if param.File.Size > constValue.MaxFileSize || param.File.Size < 0 {
+		logrus.Errorf(c.P() + "Invalid params:Big File Size or Zero File Size")
+		result.Code = util.ErrorCodeInvalidParam
+		result.Msg = "Invalid params:Big File Size or Zero File Size"
+		gc.JSON(http.StatusOK, result)
+		return
+	}
+
+	err = service.UpdateClusterConfigFile(c, param)
+	if err != nil {
+		logrus.Errorf(c.P()+"UploadClusterConfigFile failed: %s", err.Error())
+		result.Code = util.ErrorCodeFail
+		result.Msg = err.Error()
+		gc.JSON(http.StatusOK, result)
+		return
+	}
+
+	gc.JSON(http.StatusOK, result)
+	return
+}

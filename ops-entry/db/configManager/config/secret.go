@@ -184,40 +184,53 @@ func (s *SecretImpl) AddLabels(ctx context.Context, opts metav1.UpdateOptions, c
 	return err
 }
 
-func (s *SecretImpl) Update(ctx context.Context, opts metav1.UpdateOptions, data interface{}) error {
-	scData, ok := data.(map[string]string)
-	if !ok {
-		return errors.New("secretImpl Update Invalid data")
-	}
-	if len(scData) < 1 {
+func (s *SecretImpl) Update(ctx context.Context, opts metav1.UpdateOptions, data map[string]string) error {
+	if len(data) < 1 {
 		return errors.New("secretImpl Update Invalid empty data")
 	}
-	// 获取现有的secret对象
-	listOptions := s.GetListOptions(s.LabelData)
-	scs, err := s.List(ctx, listOptions)
+
+	// 直接根据SecretName获取Secret对象
+	secret, err := configManager.KCS.ClientSet.CoreV1().Secrets(s.NameSpace).Get(ctx, s.SecretName, metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
 
-	secretList, ok := scs.(*corev1.SecretList)
-	if !ok {
-		return errors.New("update  secret type trans failed")
+	// 更新Secret的StringData字段
+	secret.StringData = data
+
+	// 使用客户端更新Secrets
+	_, err = configManager.KCS.ClientSet.CoreV1().Secrets(s.NameSpace).Update(ctx, secret, opts)
+	if err != nil {
+		logrus.Errorf("update Secrets failed: [secretName:%s],[err:%v]", s.SecretName, err)
+		return err
 	}
 
-	if len(secretList.Items) < 1 {
-		logrus.Errorf("get empty data [label:%+v]", s.LabelData)
-		return errors.New("update empty secret failed")
-	}
+	// // 获取现有的secret对象
+	// listOptions := s.GetListOptions(s.LabelData)
+	// scs, err := s.List(ctx, listOptions)
+	// if err != nil {
+	// 	return err
+	// }
 
-	for _, sc := range secretList.Items {
-		sc.StringData = scData
-		// 使用客户端更新Secrets
-		_, err = configManager.KCS.ClientSet.CoreV1().Secrets(sc.Namespace).Update(ctx, &sc, opts)
-		if err != nil {
-			logrus.Errorf("update Secrets failed: [sc:%+v],[err:%v]", sc, err)
-			continue
-		}
-	}
+	// secretList, ok := scs.(*corev1.SecretList)
+	// if !ok {
+	// 	return errors.New("update  secret type trans failed")
+	// }
+
+	// if len(secretList.Items) < 1 {
+	// 	logrus.Errorf("get empty data [label:%+v]", s.LabelData)
+	// 	return errors.New("update empty secret failed")
+	// }
+
+	// for _, sc := range secretList.Items {
+	// 	sc.StringData = scData
+	// 	// 使用客户端更新Secrets
+	// 	_, err = configManager.KCS.ClientSet.CoreV1().Secrets(sc.Namespace).Update(ctx, &sc, opts)
+	// 	if err != nil {
+	// 		logrus.Errorf("update Secrets failed: [sc:%+v],[err:%v]", sc, err)
+	// 		continue
+	// 	}
+	// }
 
 	return err
 }

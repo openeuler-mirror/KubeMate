@@ -24,6 +24,51 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/clusterconfig/update": {
+            "put": {
+                "description": "Update a file with optional description",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "集群配置文件"
+                ],
+                "summary": "Update a cluster config file",
+                "parameters": [
+                    {
+                        "type": "file",
+                        "description": "The cluster config file to upload",
+                        "name": "file",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "k8s name",
+                        "name": "cluster_id",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "The JSON string containing labels for the uploaded file",
+                        "name": "labels",
+                        "in": "formData"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/proto.FileResult"
+                        }
+                    }
+                }
+            }
+        },
         "/clusterconfig/upload": {
             "post": {
                 "description": "Upload a file with optional description",
@@ -119,6 +164,45 @@ const docTemplate = `{
                 "responses": {
                     "204": {
                         "description": "No Content - Indicates successful deletion"
+                    }
+                }
+            }
+        },
+        "/kubeconfig/update": {
+            "put": {
+                "description": "Update a file with optional description",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "kubeconfig文件"
+                ],
+                "summary": "Update a kubeconfig file",
+                "parameters": [
+                    {
+                        "type": "file",
+                        "description": "The kubeconfig file to upload",
+                        "name": "file",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "k8s name",
+                        "name": "cluster_id",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful file update",
+                        "schema": {
+                            "$ref": "#/definitions/proto.FileResult"
+                        }
                     }
                 }
             }
