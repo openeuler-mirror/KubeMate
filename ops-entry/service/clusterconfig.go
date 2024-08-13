@@ -15,7 +15,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/base64"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -63,31 +62,18 @@ func UploadClusterConfigFile(c util.Context, param *proto.FileUploadParam) error
 		return errors.New("error: invalid yaml config file")
 	}
 
-	currentUser, err := user.Current()
-	if err != nil {
-		logrus.Errorf(c.P()+"Error getting current user:%v", err)
-		return err
-	}
-
-	clusterConfigSavePath := filepath.Join(currentUser.HomeDir, constValue.ClusterConfigSavePath, param.ClusterId)
-	err = util.CreatePath(clusterConfigSavePath)
-	if err != nil {
-		logrus.Errorf(c.P()+"Error creating path:%v", err)
-		return err
-	}
-
-	str := param.ClusterId
 	if param.Labels != "" {
-		labels, err = parseLabels(param.Labels)
+		labels, err = util.ParseLabels(param.Labels)
 		if err != nil {
 			return err
 		}
-
-		for key, value := range labels {
-			str = str + "-" + key + "-" + value
-		}
 	}
-	dst := filepath.Join(clusterConfigSavePath, fmt.Sprintf("%s%s", str, ".yaml"))
+
+	dst, err := util.GetSaveFilename(param.Labels, param.ClusterId)
+	if err != nil {
+		return err
+	}
+
 	outFile, err := os.Create(dst)
 	if err != nil {
 		logrus.Errorf(c.P()+"Error creating file:%v", err)
@@ -113,7 +99,7 @@ func DeleteClusterConfigFile(c util.Context, clusterID string, labels string) er
 	str := clusterID
 	secretName := clusterID + constValue.ClusterconfigPrefix
 	if labels != "" {
-		deleteLabels, err := parseLabels(labels)
+		deleteLabels, err := util.ParseLabels(labels)
 		if err != nil {
 			return err
 		}
@@ -149,7 +135,7 @@ func DeleteClusterConfigFile(c util.Context, clusterID string, labels string) er
 func QueryClusterConfigFile(c util.Context, clusterID string, labels string) (*corev1.Secret, error) {
 	secretName := clusterID + constValue.ClusterconfigPrefix
 	if labels != "" {
-		deleteLabels, err := parseLabels(labels)
+		deleteLabels, err := util.ParseLabels(labels)
 		if err != nil {
 			return nil, err
 		}
@@ -195,31 +181,17 @@ func UpdateClusterConfigFile(c util.Context, param *proto.FileUpdateParam) error
 		return errors.New("error: invalid yaml config file")
 	}
 
-	currentUser, err := user.Current()
-	if err != nil {
-		logrus.Errorf(c.P()+"Error getting current user:%v", err)
-		return err
-	}
-
-	savePath := filepath.Join(currentUser.HomeDir, constValue.ClusterConfigSavePath, param.ClusterId)
-	err = util.CreatePath(savePath)
-	if err != nil {
-		logrus.Errorf(c.P()+"Error creating path:%v", err)
-		return err
-	}
-
-	str := param.ClusterId
 	if param.Labels != "" {
-		updateLabels, err = parseLabels(param.Labels)
+		updateLabels, err = util.ParseLabels(param.Labels)
 		if err != nil {
 			return err
 		}
-
-		for key, value := range updateLabels {
-			str = str + "-" + key + "-" + value
-		}
 	}
-	dst := filepath.Join(savePath, fmt.Sprintf("%s%s", str, ".yaml"))
+
+	dst, err := util.GetSaveFilename(param.Labels, param.ClusterId)
+	if err != nil {
+		return err
+	}
 
 	outFile, err := os.Create(dst)
 	if err != nil {
@@ -245,15 +217,6 @@ func validYamlConfig(c util.Context, content []byte) bool {
 		return false
 	}
 	return true
-}
-
-func parseLabels(labelData string) (map[string]string, error) {
-	var labels map[string]string
-	if err := json.Unmarshal([]byte(labelData), &labels); err != nil {
-		logrus.Errorf("error unmarshal lables data:%v", labelData)
-		return nil, errors.New("error unmarshal lables data:" + err.Error())
-	}
-	return labels, nil
 }
 
 func saveClusterConfig2Secret(c util.Context, clusterID string, configBytes []byte, labelData map[string]string) error {
