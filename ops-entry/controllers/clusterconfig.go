@@ -121,6 +121,7 @@ func ClusterconfigFileUploadHandler(gc *gin.Context) {
 //	@Description	Delete a cluster config file with optional description
 //	@Tags			集群配置文件
 //	@Param			cluster_id	path	string	true	"k8s name"
+//	@Param         	labels      query   string  false "The JSON string containing labels to filter the files to delete. Optional."
 //	@Success		204			"No Content - Indicates successful deletion"
 //	@Router			/clusterconfig/{cluster_id} [DELETE]
 func ClusterconfigFileDeleteHandler(gc *gin.Context) {
@@ -129,7 +130,21 @@ func ClusterconfigFileDeleteHandler(gc *gin.Context) {
 	if len(requestId) == 0 {
 		gc.Request.Header.Set("Request-Id", c.RequestId)
 	}
-	service.DeleteClusterConfigFile(c, requestId)
+	var result proto.FileResult
+	result.Code = 0
+	result.Msg = "success"
+	result.RequestId = c.RequestId
+
+	// 从查询参数中获取labels（可选）
+	labels := gc.Query("labels")
+
+	if err := service.DeleteClusterConfigFile(c, requestId, labels); err != nil {
+		logrus.Errorf(c.P()+"DeleteClusterConfigFile failed: %s", err.Error())
+		result.Code = util.ErrorCodeFail
+		result.Msg = err.Error()
+		gc.JSON(http.StatusOK, result)
+		return
+	}
 
 	gc.Status(http.StatusNoContent)
 	return
@@ -140,6 +155,7 @@ func ClusterconfigFileDeleteHandler(gc *gin.Context) {
 // @Description Query a clusterconfig file by cluster ID
 // @Tags 		集群配置文件
 // @Param 		cluster_id 	path 		string true "k8s cluster ID"
+// @Param       labels      query   	string  false "The JSON string containing labels to filter the files to delete. Optional."
 // @Success		200			{object}	proto.FileResult
 // @Router /clusterconfig/{cluster_id} [GET]
 func ClusterconfigFileQueryHandler(gc *gin.Context) {
@@ -156,7 +172,9 @@ func ClusterconfigFileQueryHandler(gc *gin.Context) {
 	result.Msg = "success"
 	result.RequestId = c.RequestId
 
-	secret, err := service.QueryClusterConfigFile(c, requestId)
+	labels := gc.Query("labels")
+
+	secret, err := service.QueryClusterConfigFile(c, requestId, labels)
 	if err != nil && !k8serrors.IsNotFound(err) {
 		logrus.Errorf("failed to get secret to cluster_id: %s: %v", requestId, err)
 		result.Code = util.ErrorCodeFail
