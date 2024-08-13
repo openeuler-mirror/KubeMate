@@ -76,8 +76,18 @@ func UploadClusterConfigFile(c util.Context, param *proto.FileUploadParam) error
 		return err
 	}
 
-	dst := filepath.Join(clusterConfigSavePath, fmt.Sprintf("%s-%s", param.ClusterId, param.File.Filename))
+	str := param.ClusterId
+	if param.Labels != "" {
+		labels, err = parseLabels(param.Labels)
+		if err != nil {
+			return err
+		}
 
+		for key, value := range labels {
+			str = str + "-" + key + "-" + value
+		}
+	}
+	dst := filepath.Join(clusterConfigSavePath, fmt.Sprintf("%s%s", str, ".yaml"))
 	outFile, err := os.Create(dst)
 	if err != nil {
 		logrus.Errorf(c.P()+"Error creating file:%v", err)
@@ -90,13 +100,6 @@ func UploadClusterConfigFile(c util.Context, param *proto.FileUploadParam) error
 		return errors.New("Error copying file:" + err.Error())
 	}
 
-	if param.Labels != "" {
-		labels, err = parseLabels(param.Labels)
-		if err != nil {
-			return err
-		}
-	}
-
 	if param.Type == proto.FileTypeCR {
 		if err := applyCRResource(content, labels); err != nil {
 			return err
@@ -107,6 +110,7 @@ func UploadClusterConfigFile(c util.Context, param *proto.FileUploadParam) error
 }
 
 func DeleteClusterConfigFile(c util.Context, clusterID string, labels string) error {
+	str := clusterID
 	secretName := clusterID + constValue.ClusterconfigPrefix
 	if labels != "" {
 		deleteLabels, err := parseLabels(labels)
@@ -116,6 +120,21 @@ func DeleteClusterConfigFile(c util.Context, clusterID string, labels string) er
 
 		for key, value := range deleteLabels {
 			secretName = secretName + "-" + key + "-" + value
+			str = str + "-" + key + "-" + value
+		}
+	}
+	currentUser, err := user.Current()
+	if err != nil {
+		logrus.Errorf(c.P()+"Error getting current user:%v", err)
+		return err
+	}
+
+	clusterConfigSavePath := filepath.Join(currentUser.HomeDir, constValue.ClusterConfigSavePath, clusterID)
+	dst := filepath.Join(clusterConfigSavePath, fmt.Sprintf("%s%s", str, ".yaml"))
+	if _, err := os.Stat(dst); !os.IsNotExist(err) {
+		// 如果文件存在，则尝试删除
+		if err := os.Remove(dst); err != nil {
+			logrus.Errorf(c.P()+"Error deleting file:%s\n", err)
 		}
 	}
 
@@ -189,7 +208,18 @@ func UpdateClusterConfigFile(c util.Context, param *proto.FileUpdateParam) error
 		return err
 	}
 
-	dst := filepath.Join(savePath, fmt.Sprintf("%s-%s", param.ClusterId, param.File.Filename))
+	str := param.ClusterId
+	if param.Labels != "" {
+		updateLabels, err = parseLabels(param.Labels)
+		if err != nil {
+			return err
+		}
+
+		for key, value := range updateLabels {
+			str = str + "-" + key + "-" + value
+		}
+	}
+	dst := filepath.Join(savePath, fmt.Sprintf("%s%s", str, ".yaml"))
 
 	outFile, err := os.Create(dst)
 	if err != nil {
@@ -201,13 +231,6 @@ func UpdateClusterConfigFile(c util.Context, param *proto.FileUpdateParam) error
 	if _, err := io.Copy(outFile, bytes.NewReader(content)); err != nil {
 		logrus.Errorf(c.P()+"Error copying file:%v", err)
 		return errors.New("Error copying file:" + err.Error())
-	}
-
-	if param.Labels != "" {
-		updateLabels, err = parseLabels(param.Labels)
-		if err != nil {
-			return err
-		}
 	}
 
 	return updateClusterConfig2Secret(c, param.ClusterId, content, updateLabels)
