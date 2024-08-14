@@ -13,6 +13,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/client-go/util/homedir"
 
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -78,7 +79,7 @@ func getConfig() (*rest.Config, error) {
 		// 使用集群内的配置创建clientset
 		return rest.InClusterConfig()
 	}
-	return clientcmd.BuildConfigFromFlags("", constValue.KubeConfig)
+	return clientcmd.BuildConfigFromFlags("", homedir.HomeDir()+constValue.KubeConfig)
 }
 
 // GetOuterK8sConfig  获取用户上传的kubeconfig

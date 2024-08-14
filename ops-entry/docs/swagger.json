@@ -301,10 +301,94 @@
                     }
                 }
             }
+        },
+        "/nkd/deploy": {
+            "post": {
+                "description": "Deploy a kubernetes cluster",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "NKD管理Kubernetes集群"
+                ],
+                "summary": "Deploy a kubernetes cluster",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "k8s cluster name",
+                        "name": "cluster_id",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "The JSON string containing labels to filter the files to delete. Optional.",
+                        "name": "labels",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/proto.NKDResult"
+                        }
+                    }
+                }
+            }
+        },
+        "/nkd/destroy": {
+            "delete": {
+                "description": "Destroy a kubernetes cluster",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "NKD管理Kubernetes集群"
+                ],
+                "summary": "Destroy a kubernetes cluster",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "kubernetes cluster name",
+                        "name": "clusterID",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/proto.NKDResult"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
         "proto.FileResult": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "msg": {
+                    "type": "string"
+                },
+                "request_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "proto.NKDResult": {
             "type": "object",
             "properties": {
                 "code": {
