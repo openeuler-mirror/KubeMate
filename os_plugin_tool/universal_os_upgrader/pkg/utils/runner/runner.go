@@ -15,28 +15,21 @@
  * limitations under the License.
  * /
  */
-
-package service
+package runner
 
 import (
-	"universal_os_upgrader/model"
+	"os/exec"
 
 	"github.com/sirupsen/logrus"
 )
 
-func InitCmd() {
-	univeralOSUpgradeCmd := model.NewUniversalOS()
-	topCmd := univeralOSUpgradeCmd.RegisterEntryCmd()
-	subCmdList := univeralOSUpgradeCmd.GetSubCmd()
-	if len(subCmdList) < 1 {
-		logrus.Error("empty subCmdList")
-		return
-	}
-	for _, subCmd := range subCmdList {
-		topCmd.AddCommand(subCmd)
-	}
+type Runner struct {
+}
 
-	if err := topCmd.Execute(); err != nil {
-		return
+func (r *Runner) RunCommand(cmd string) (string, error) {
+	output, err := exec.Command("/bin/sh", "-c", cmd).CombinedOutput()
+	if err != nil {
+		logrus.Errorf("run command: %s, failed: %v", cmd, err)
 	}
+	return string(output), err
 }

@@ -44,5 +44,10 @@ func (o *OSUpgradeImpl) RegisterSubCmd() *cobra.Command {
 }
 
 func RunUpgradeCmd(cmd *cobra.Command, args []string) error {
+	osbackup := NewOSBackup()
+	if err := osbackup.CopyData(); err != nil {
+		return err
+	}
+
 	return nil
 }

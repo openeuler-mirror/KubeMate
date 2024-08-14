@@ -15,28 +15,20 @@
  * limitations under the License.
  * /
  */
-
-package service
+package template
 
 import (
-	"universal_os_upgrader/model"
+	"text/template"
 
-	"github.com/sirupsen/logrus"
+	util "github.com/kubesphere/kubekey/pkg/util"
+	"github.com/lithammer/dedent"
 )
 
-func InitCmd() {
-	univeralOSUpgradeCmd := model.NewUniversalOS()
-	topCmd := univeralOSUpgradeCmd.RegisterEntryCmd()
-	subCmdList := univeralOSUpgradeCmd.GetSubCmd()
-	if len(subCmdList) < 1 {
-		logrus.Error("empty subCmdList")
-		return
+func TemplateRender(temp string, datastore map[string]interface{}) (string, error) {
+	tempDedented := dedent.Dedent(temp)
+	tmpl, err := template.New("test").Parse(dedent.Dedent(tempDedented))
+	if err != nil {
+		return "", err
 	}
-	for _, subCmd := range subCmdList {
-		topCmd.AddCommand(subCmd)
-	}
-
-	if err := topCmd.Execute(); err != nil {
-		return
-	}
+	return util.Render(tmpl, datastore)
 }
