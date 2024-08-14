@@ -9,6 +9,15 @@ definitions:
       request_id:
         type: string
     type: object
+  proto.NKDResult:
+    properties:
+      code:
+        type: integer
+      msg:
+        type: string
+      request_id:
+        type: string
+    type: object
 host: 0.0.0.0:9090
 info:
   contact:
@@ -214,4 +223,51 @@ paths:
       summary: Upload a kubeconfig file
       tags:
       - kubeconfig文件
+  /nkd/deploy:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Deploy a kubernetes cluster
+      parameters:
+      - description: k8s cluster name
+        in: formData
+        name: cluster_id
+        required: true
+        type: string
+      - description: The JSON string containing labels to filter the files to delete.
+          Optional.
+        in: query
+        name: labels
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/proto.NKDResult'
+      summary: Deploy a kubernetes cluster
+      tags:
+      - NKD管理Kubernetes集群
+  /nkd/destroy:
+    delete:
+      consumes:
+      - multipart/form-data
+      description: Destroy a kubernetes cluster
+      parameters:
+      - description: kubernetes cluster name
+        in: formData
+        name: clusterID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/proto.NKDResult'
+      summary: Destroy a kubernetes cluster
+      tags:
+      - NKD管理Kubernetes集群
 swagger: "2.0"

@@ -11,7 +11,7 @@ const Clusterconfig = "clusterconfig"
 const KubeconfigSavePath = ".kube"
 const KubeconfigFileName = "config"
 
-const ClusterConfigSavePath = "nkd"
+const ClusterConfigSavePath = ".nkd"
 
 const KubeconfigPrefix = "-kubeconfig"
 const ClusterconfigPrefix = "-clusterconfig"

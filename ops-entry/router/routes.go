@@ -55,6 +55,13 @@ func NewRouter() *gin.Engine {
 		clusterConfigRouter.PUT("/update", controllers.ClusterconfigFileUpdateHandler)
 	}
 
+	// api for nkd
+	nkdRouter := router.Group("/nkd")
+	{
+		nkdRouter.POST("/deploy", controllers.NKDDeployHandler)
+		nkdRouter.DELETE("/destroy", controllers.NKDDeleteHandler)
+	}
+
 	return router
 }
 
