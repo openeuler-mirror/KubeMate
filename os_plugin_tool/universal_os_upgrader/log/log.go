@@ -13,9 +13,10 @@
 package log
 
 import (
+	"time"
+
 	"github.com/natefinch/lumberjack"
 	"github.com/sirupsen/logrus"
-	"time"
 )
 
 func InitLog() {

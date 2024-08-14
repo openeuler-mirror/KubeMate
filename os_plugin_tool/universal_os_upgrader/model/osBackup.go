@@ -16,27 +16,37 @@
  * /
  */
 
-package service
+package model
 
 import (
-	"universal_os_upgrader/model"
+	"universal_os_upgrader/pkg/common"
+	"universal_os_upgrader/pkg/utils/runner"
 
 	"github.com/sirupsen/logrus"
 )
 
-func InitCmd() {
-	univeralOSUpgradeCmd := model.NewUniversalOS()
-	topCmd := univeralOSUpgradeCmd.RegisterEntryCmd()
-	subCmdList := univeralOSUpgradeCmd.GetSubCmd()
-	if len(subCmdList) < 1 {
-		logrus.Error("empty subCmdList")
-		return
+type OSBackupImpl struct {
+	OSBackupConfig
+}
+
+type OSBackupConfig struct {
+}
+
+func NewOSBackup() *OSBackupImpl {
+	return &OSBackupImpl{}
+}
+
+func (o *OSBackupImpl) CopyData() error {
+	shell, err := common.GetRearShell(common.HandleBackup)
+	if err != nil {
+		logrus.Errorf("error to get backup shell file:%v", err)
+		return err
 	}
-	for _, subCmd := range subCmdList {
-		topCmd.AddCommand(subCmd)
+	r := &runner.Runner{}
+	_, err = r.RunCommand(shell)
+	if err != nil {
+		return err
 	}
 
-	if err := topCmd.Execute(); err != nil {
-		return
-	}
+	return nil
 }
