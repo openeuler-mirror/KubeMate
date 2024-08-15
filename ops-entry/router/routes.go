@@ -60,6 +60,7 @@ func NewRouter() *gin.Engine {
 	{
 		nkdRouter.POST("/deploy", controllers.NKDDeployHandler)
 		nkdRouter.DELETE("/destroy", controllers.NKDDeleteHandler)
+		nkdRouter.POST("/extend", controllers.NKDExtendHandler)
 	}
 
 	return router

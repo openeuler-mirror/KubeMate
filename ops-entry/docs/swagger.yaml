@@ -1,4 +1,3 @@
-basePath: /swagger/index.html
 definitions:
   proto.FileResult:
     properties:
@@ -8,6 +7,37 @@ definitions:
         type: string
       request_id:
         type: string
+    type: object
+  proto.NKDDeployParam:
+    properties:
+      cluster_id:
+        example: cluster
+        type: string
+      labels:
+        example: '{"version":"v0.1"}'
+        type: string
+    required:
+    - cluster_id
+    type: object
+  proto.NKDDestroyParam:
+    properties:
+      cluster_id:
+        example: cluster
+        type: string
+    required:
+    - cluster_id
+    type: object
+  proto.NKDExtendParam:
+    properties:
+      cluster_id:
+        example: cluster
+        type: string
+      num:
+        example: "1"
+        type: string
+    required:
+    - cluster_id
+    - num
     type: object
   proto.NKDResult:
     properties:
@@ -226,19 +256,15 @@ paths:
   /nkd/deploy:
     post:
       consumes:
-      - multipart/form-data
+      - application/json
       description: Deploy a kubernetes cluster
       parameters:
-      - description: k8s cluster name
-        in: formData
-        name: cluster_id
+      - description: Deploy a kubernetes cluster
+        in: body
+        name: deploy
         required: true
-        type: string
-      - description: The JSON string containing labels to filter the files to delete.
-          Optional.
-        in: query
-        name: labels
-        type: string
+        schema:
+          $ref: '#/definitions/proto.NKDDeployParam'
       produces:
       - application/json
       responses:
@@ -248,18 +274,19 @@ paths:
             $ref: '#/definitions/proto.NKDResult'
       summary: Deploy a kubernetes cluster
       tags:
-      - NKD管理Kubernetes集群
+      - Use NKD to manage a kubernetes cluster
   /nkd/destroy:
     delete:
       consumes:
-      - multipart/form-data
+      - application/json
       description: Destroy a kubernetes cluster
       parameters:
-      - description: kubernetes cluster name
-        in: formData
-        name: clusterID
+      - description: Destroy a kubernetes cluster
+        in: body
+        name: destroy
         required: true
-        type: string
+        schema:
+          $ref: '#/definitions/proto.NKDDestroyParam'
       produces:
       - application/json
       responses:
@@ -269,5 +296,27 @@ paths:
             $ref: '#/definitions/proto.NKDResult'
       summary: Destroy a kubernetes cluster
       tags:
-      - NKD管理Kubernetes集群
+      - Use NKD to manage a kubernetes cluster
+  /nkd/extend:
+    post:
+      consumes:
+      - application/json
+      description: Extend a kubernetes cluster
+      parameters:
+      - description: Extend a kubernetes cluster
+        in: body
+        name: extend
+        required: true
+        schema:
+          $ref: '#/definitions/proto.NKDExtendParam'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/proto.NKDResult'
+      summary: Extend a kubernetes cluster
+      tags:
+      - Use NKD to manage a kubernetes cluster
 swagger: "2.0"
