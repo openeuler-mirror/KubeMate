@@ -18,6 +18,9 @@
 package runner
 
 import (
+	"bytes"
+	"io"
+	"os"
 	"os/exec"
 
 	"github.com/sirupsen/logrus"
@@ -26,10 +29,48 @@ import (
 type Runner struct {
 }
 
-func (r *Runner) RunCommand(cmd string) (string, error) {
-	output, err := exec.Command("/bin/sh", "-c", cmd).CombinedOutput()
+func (r *Runner) RunCommand(command string) error {
+	var out bytes.Buffer
+	cmd := exec.Command("sh", "-c", command)
+	multiWriter := io.MultiWriter(&out, os.Stdout)
+	cmd.Stdout = multiWriter
+
+	err := cmd.Run()
 	if err != nil {
-		logrus.Errorf("run command: %s, failed: %v", cmd, err)
+		logrus.Errorf("failed to run command %s: %v", command, err)
+		return err
 	}
-	return string(output), err
+
+	return nil
+}
+
+func (r *Runner) RunShell(shell string) error {
+	tempFile, err := os.CreateTemp("/tmp/", "rear.sh")
+	if err != nil {
+		logrus.Errorf("failed to create temp file: %v", err)
+		return err
+	}
+	defer os.Remove(tempFile.Name())
+
+	// 将shell脚本写入临时文件
+	if _, err := tempFile.WriteString(shell); err != nil {
+		logrus.Errorf("failed to write to temp file: %v", err)
+		return err
+	}
+	if err := tempFile.Close(); err != nil {
+		logrus.Errorf("failed to close temp file: %v", err)
+		return err
+	}
+
+	if err := os.Chmod(tempFile.Name(), 0555); err != nil {
+		logrus.Errorf("failed to set execute permission on temp file: %v", err)
+		return err
+	}
+
+	if err = r.RunCommand(tempFile.Name()); err != nil {
+		return err
+	}
+	logrus.Info("backup os executed successfully!")
+
+	return nil
 }

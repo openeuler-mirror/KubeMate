@@ -9,38 +9,31 @@
  * PURPOSE.
  * See the Mulan PSL v2 for more details.
  */
-package model
+package command
 
 import (
-	"universal_os_upgrader/pkg/common"
-	"universal_os_upgrader/pkg/utils/runner"
+	"errors"
+	"os"
 
 	"github.com/sirupsen/logrus"
+	"gopkg.in/yaml.v2"
 )
 
-type OSBackupImpl struct {
-	OSBackupConfig
-	r runner.Runner
-}
-
-type OSBackupConfig struct {
-}
-
-func NewOSBackup(r runner.Runner) *OSBackupImpl {
-	return &OSBackupImpl{
-		r: r,
+func ReadConfigFile(opts *OptionsList) (*PluginConfig, error) {
+	if opts.File == "" {
+		logrus.Error("plugin config file path is empty")
+		return nil, errors.New("plugin config file path empty")
 	}
-}
 
-func (o *OSBackupImpl) CopyData() error {
-	shell, err := common.GetRearShell(common.HandleBackup)
+	fileData, err := os.ReadFile(opts.File)
 	if err != nil {
-		logrus.Errorf("error to get backup shell file:%v", err)
-		return err
+		logrus.Errorf("failed to read config file %s :%v", opts.File, err)
+		return nil, err
 	}
-	if err := o.r.RunShell(shell); err != nil {
-		return err
+	configData := &PluginConfig{}
+	if err := yaml.Unmarshal(fileData, configData); err != nil {
+		logrus.Errorf("failed to unmarshal json file:%v", err)
+		return nil, err
 	}
-
-	return nil
+	return configData, nil
 }
