@@ -9,37 +9,41 @@
  * PURPOSE.
  * See the Mulan PSL v2 for more details.
  */
-package model
+package utils
 
 import (
-	"universal_os_upgrader/pkg/common"
-	"universal_os_upgrader/pkg/utils/runner"
+	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/sirupsen/logrus"
 )
 
-type OSBackupImpl struct {
-	OSBackupConfig
-	r runner.Runner
-}
+const (
+	//yum源基础路径
+	RepoPath    = "/etc/yum.repos.d"
+	NewRepoName = "upgrade.repo"
+)
 
-type OSBackupConfig struct {
-}
-
-func NewOSBackup(r runner.Runner) *OSBackupImpl {
-	return &OSBackupImpl{
-		r: r,
-	}
-}
-
-func (o *OSBackupImpl) CopyData() error {
-	shell, err := common.GetRearShell(common.HandleBackup)
+func RenameRepoFiles() error {
+	files, err := os.ReadDir(RepoPath)
 	if err != nil {
-		logrus.Errorf("error to get backup shell file:%v", err)
+		logrus.Errorf("failed to read directory: %v", err)
 		return err
 	}
-	if err := o.r.RunShell(shell); err != nil {
-		return err
+
+	for _, file := range files {
+		if strings.HasSuffix(file.Name(), ".repo") {
+			oldPath := filepath.Join(RepoPath, file.Name())
+			newPath := oldPath + ".bu"
+
+			// 重命名文件
+			err := os.Rename(oldPath, newPath)
+			if err != nil {
+				logrus.Errorf("failed to rename file %s to %s: %v", oldPath, newPath, err)
+				return err
+			}
+		}
 	}
 
 	return nil

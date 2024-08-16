@@ -1,25 +1,32 @@
 /*
- *
  * Copyright 2024 KylinSoft  Co., Ltd.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * 	http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- * /
+ * KubeMate is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *     http://license.coscl.org.cn/MulanPSL2
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY OR FIT FOR A PARTICULAR
+ * PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
 
 package model
 
 import (
+	"os"
+	"path/filepath"
+	"universal_os_upgrader/model/command"
+	"universal_os_upgrader/pkg/utils"
+	"universal_os_upgrader/pkg/utils/runner"
+
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+)
+
+const (
+	yumCleanall  = "yum clean all"
+	yumMakecache = "yum makecache"
+	yumUpdate    = "yum update -y"
 )
 
 type OSUpgradeImpl struct {
@@ -36,18 +43,56 @@ func NewOSUpgrade() *OSUpgradeImpl {
 }
 
 func (o *OSUpgradeImpl) RegisterSubCmd() *cobra.Command {
-	return &cobra.Command{
+	upgradeCmd := &cobra.Command{
 		Use:   "upgrade",
 		Short: "os upgrade",
 		RunE:  RunUpgradeCmd,
 	}
+	command.SetupUpgradeCmdOpts(upgradeCmd)
+	return upgradeCmd
 }
 
 func RunUpgradeCmd(cmd *cobra.Command, args []string) error {
-	osbackup := NewOSBackup()
+	r := runner.Runner{}
+	//OS备份
+	osbackup := NewOSBackup(r)
 	if err := osbackup.CopyData(); err != nil {
 		return err
 	}
+
+	configData, err := command.ReadConfigFile(&command.Opts)
+	if err != nil {
+		return err
+	}
+	//repo源文件备份
+	if err := utils.RenameRepoFiles(); err != nil {
+		return err
+	}
+
+	//repo源文件更新
+	repoFile := filepath.Join(utils.RepoPath, utils.NewRepoName)
+	err = os.WriteFile(repoFile, []byte(configData.Repo), 0644)
+	if err != nil {
+		logrus.Errorf("error writing repo file: %v\n", err)
+		return err
+	}
+
+	logrus.Info("Starting upgrade...")
+	if err := r.RunCommand(yumCleanall); err != nil {
+		logrus.Errorf("failed to run command %s", yumCleanall)
+		return err
+	}
+
+	if err := r.RunCommand(yumMakecache); err != nil {
+		logrus.Errorf("failed to run command %s", yumMakecache)
+		return err
+	}
+
+	if err := r.RunCommand(yumUpdate); err != nil {
+		logrus.Errorf("failed to run command %s", yumUpdate)
+		return err
+	}
+	logrus.Info("Upgrade successfully!")
 
 	return nil
 }
