@@ -19,6 +19,7 @@ import (
 	"ops-entry/constValue"
 	"ops-entry/proto"
 	"os/exec"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
@@ -28,13 +29,12 @@ import (
 //
 //	@Summary		Deploy a kubernetes cluster
 //	@Description	Deploy a kubernetes cluster
-//	@Tags			NKD管理Kubernetes集群
-//	@Accept			multipart/form-data
+//	@Tags			Use NKD to manage a kubernetes cluster
+//	@Accept			application/json
 //	@Produce		json
-//	@Param			cluster_id	formData	string	true	"k8s cluster name"
-//	@Param			labels      query		string	false	"The JSON string containing labels to filter the files to delete. Optional."
-//	@Success		200			{object}	proto.NKDResult
-//	@Router			/nkd/deploy	[POST]
+//	@Param			deploy			body		proto.NKDDeployParam	true	"Deploy a kubernetes cluster"
+//	@Success		200				{object}	proto.NKDResult
+//	@Router			/nkd/deploy		[POST]
 func NKDDeployHandler(gc *gin.Context) {
 	requestId := gc.GetHeader("Request-Id")
 	c := util.CreateContext(requestId)
@@ -47,32 +47,27 @@ func NKDDeployHandler(gc *gin.Context) {
 	result.Msg = "success"
 	result.RequestId = c.RequestId
 
-	param := new(proto.NKDParam)
-	err := gc.Bind(param)
-	if err != nil {
-		logrus.Errorf(c.P()+"Invalid params: %s", err.Error())
+	var requestBody proto.NKDDeployParam
+	if err := gc.ShouldBindJSON(&requestBody); err != nil {
+		logrus.Errorf(c.P()+"Invalid param: %s", err.Error())
 		result.Code = util.ErrorCodeInvalidParam
 		result.Msg = err.Error()
 		gc.JSON(http.StatusOK, result)
 		return
 	}
 
-	param.ClusterID = gc.PostForm("cluster_id")
-	if param.ClusterID == "" {
-		logrus.Errorf(c.P() + "Invalid param")
+	if requestBody.ClusterID == "" {
+		logrus.Errorf(c.P() + "Invalid param: clusterID is missing")
 		result.Code = util.ErrorCodeInvalidParam
-		result.Msg = "Invalid param"
+		result.Msg = "Invalid param: clusterID is missing"
 		gc.JSON(http.StatusOK, result)
 		return
 	}
 
-	// 可选参数
-	param.Labels = gc.Query("labels")
-
-	byteParam, _ := json.Marshal(param)
+	byteParam, _ := json.Marshal(requestBody)
 	logrus.Infof(c.P()+"FileUploadHandler param: %s", string(byteParam))
 
-	dst, err := util.GetSaveFilename(param.Labels, param.ClusterID)
+	dst, err := util.GetSaveFilename(requestBody.Labels, requestBody.ClusterID)
 	if err != nil {
 		logrus.Errorf(c.P()+"Failed to get cluster config file: %s", err.Error())
 		return
@@ -97,12 +92,12 @@ func NKDDeployHandler(gc *gin.Context) {
 //
 //	@Summary		Destroy a kubernetes cluster
 //	@Description	Destroy a kubernetes cluster
-//	@Tags			NKD管理Kubernetes集群
-//	@Accept			multipart/form-data
+//	@Tags			Use NKD to manage a kubernetes cluster
+//	@Accept			application/json
 //	@Produce		json
-//	@Param			clusterID	formData	string	true	"kubernetes cluster name"
-//	@Success		200			{object}	proto.NKDResult
-//	@Router			/nkd/destroy [Delete]
+//	@Param			destroy			body		proto.NKDDestroyParam	true	"Destroy a kubernetes cluster"
+//	@Success		200				{object}	proto.NKDResult
+//	@Router			/nkd/destroy 	[Delete]
 func NKDDeleteHandler(gc *gin.Context) {
 	requestId := gc.GetHeader("Request-Id")
 	c := util.CreateContext(requestId)
@@ -114,9 +109,8 @@ func NKDDeleteHandler(gc *gin.Context) {
 	result.Msg = "success"
 	result.RequestId = c.RequestId
 
-	param := new(proto.NKDParam)
-	err := gc.Bind(param)
-	if err != nil {
+	var requestBody proto.NKDDestroyParam
+	if err := gc.ShouldBindJSON(&requestBody); err != nil {
 		logrus.Errorf(c.P()+"Invalid param: %s", err.Error())
 		result.Code = util.ErrorCodeInvalidParam
 		result.Msg = err.Error()
@@ -124,8 +118,7 @@ func NKDDeleteHandler(gc *gin.Context) {
 		return
 	}
 
-	param.ClusterID = gc.PostForm("clusterID")
-	if param.ClusterID == "" {
+	if requestBody.ClusterID == "" {
 		logrus.Errorf(c.P() + "Invalid param")
 		result.Code = util.ErrorCodeInvalidParam
 		result.Msg = "Invalid param"
@@ -133,11 +126,11 @@ func NKDDeleteHandler(gc *gin.Context) {
 		return
 	}
 
-	cmd := exec.Command(constValue.NkdPath, "destroy", "--cluster-id", param.ClusterID)
+	cmd := exec.Command(constValue.NkdPath, "destroy", "--cluster-id", requestBody.ClusterID)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		logrus.Errorf(c.P()+"Failed to destroy cluster: %s, output: %s", err.Error(), string(output))
-		result.Code = util.ErrorCodeInvalidParam
+		result.Code = util.ErrorCodeExecFail
 		result.Msg = err.Error()
 		gc.JSON(http.StatusOK, result)
 		return
@@ -145,5 +138,67 @@ func NKDDeleteHandler(gc *gin.Context) {
 	logrus.Infof(c.P()+"Cluster destroyed successfully, output: %s", string(output))
 
 	result.Msg = "Cluster destroyed successfully"
+	gc.JSON(http.StatusOK, result)
+}
+
+// NKDExtendHandler
+//
+//	@Summary		Extend a kubernetes cluster
+//	@Description	Extend a kubernetes cluster
+//	@Tags			Use NKD to manage a kubernetes cluster
+//	@Accept			application/json
+//	@Produce		json
+//	@Param			extend		body		proto.NKDExtendParam	true	"Extend a kubernetes cluster"
+//	@Success		200			{object}	proto.NKDResult
+//	@Router			/nkd/extend [POST]
+func NKDExtendHandler(gc *gin.Context) {
+	requestId := gc.GetHeader("Request-Id")
+	c := util.CreateContext(requestId)
+	if len(requestId) == 0 {
+		gc.Request.Header.Set("Request-Id", c.RequestId)
+	}
+	var result proto.NKDResult
+	result.Code = 0
+	result.Msg = "success"
+	result.RequestId = c.RequestId
+
+	var requestBody proto.NKDExtendParam
+	if err := gc.ShouldBindJSON(&requestBody); err != nil {
+		logrus.Errorf(c.P()+"Invalid param: %s", err.Error())
+		result.Code = util.ErrorCodeFail
+		result.Msg = err.Error()
+		gc.JSON(http.StatusOK, result)
+		return
+	}
+
+	if requestBody.ClusterID == "" {
+		logrus.Errorf(c.P() + "Invalid param")
+		result.Code = util.ErrorCodeInvalidParam
+		result.Msg = "Invalid param"
+		gc.JSON(http.StatusOK, result)
+		return
+	}
+
+	num, err := strconv.Atoi(requestBody.Num)
+	if err != nil || num <= 0 {
+		logrus.Errorf(c.P()+"Invalid num: %s", err.Error())
+		result.Code = util.ErrorCodeInvalidParam
+		result.Msg = "Invalid num"
+		gc.JSON(http.StatusOK, result)
+		return
+	}
+
+	cmd := exec.Command(constValue.NkdPath, "extend", "--cluster-id", requestBody.ClusterID, "-n", requestBody.Num)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		logrus.Errorf(c.P()+"Failed to extend cluster: %s, output: %s", err.Error(), string(output))
+		result.Code = util.ErrorCodeExecFail
+		result.Msg = err.Error()
+		gc.JSON(http.StatusOK, result)
+		return
+	}
+	logrus.Infof(c.P()+"Cluster extended successfully, output: %s", string(output))
+
+	result.Msg = "Cluster extended successfully"
 	gc.JSON(http.StatusOK, result)
 }

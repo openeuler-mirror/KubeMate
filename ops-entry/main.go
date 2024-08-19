@@ -35,7 +35,6 @@ import (
 //	@license.url	http://license.coscl.org.cn/MulanPSL2
 
 //	@host		0.0.0.0:9090
-//	@BasePath	/swagger/index.html
 
 func main() {
 	log.InitLog()

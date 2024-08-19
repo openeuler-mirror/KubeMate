@@ -312,28 +312,24 @@ const docTemplate = `{
             "post": {
                 "description": "Deploy a kubernetes cluster",
                 "consumes": [
-                    "multipart/form-data"
+                    "application/json"
                 ],
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "NKD管理Kubernetes集群"
+                    "Use NKD to manage a kubernetes cluster"
                 ],
                 "summary": "Deploy a kubernetes cluster",
                 "parameters": [
                     {
-                        "type": "string",
-                        "description": "k8s cluster name",
-                        "name": "cluster_id",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "The JSON string containing labels to filter the files to delete. Optional.",
-                        "name": "labels",
-                        "in": "query"
+                        "description": "Deploy a kubernetes cluster",
+                        "name": "deploy",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/proto.NKDDeployParam"
+                        }
                     }
                 ],
                 "responses": {
@@ -350,22 +346,58 @@ const docTemplate = `{
             "delete": {
                 "description": "Destroy a kubernetes cluster",
                 "consumes": [
-                    "multipart/form-data"
+                    "application/json"
                 ],
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "NKD管理Kubernetes集群"
+                    "Use NKD to manage a kubernetes cluster"
                 ],
                 "summary": "Destroy a kubernetes cluster",
                 "parameters": [
                     {
-                        "type": "string",
-                        "description": "kubernetes cluster name",
-                        "name": "clusterID",
-                        "in": "formData",
-                        "required": true
+                        "description": "Destroy a kubernetes cluster",
+                        "name": "destroy",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/proto.NKDDestroyParam"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/proto.NKDResult"
+                        }
+                    }
+                }
+            }
+        },
+        "/nkd/extend": {
+            "post": {
+                "description": "Extend a kubernetes cluster",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Use NKD to manage a kubernetes cluster"
+                ],
+                "summary": "Extend a kubernetes cluster",
+                "parameters": [
+                    {
+                        "description": "Extend a kubernetes cluster",
+                        "name": "extend",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/proto.NKDExtendParam"
+                        }
                     }
                 ],
                 "responses": {
@@ -394,6 +426,51 @@ const docTemplate = `{
                 }
             }
         },
+        "proto.NKDDeployParam": {
+            "type": "object",
+            "required": [
+                "cluster_id"
+            ],
+            "properties": {
+                "cluster_id": {
+                    "type": "string",
+                    "example": "cluster"
+                },
+                "labels": {
+                    "type": "string",
+                    "example": "{\"version\":\"v0.1\"}"
+                }
+            }
+        },
+        "proto.NKDDestroyParam": {
+            "type": "object",
+            "required": [
+                "cluster_id"
+            ],
+            "properties": {
+                "cluster_id": {
+                    "type": "string",
+                    "example": "cluster"
+                }
+            }
+        },
+        "proto.NKDExtendParam": {
+            "type": "object",
+            "required": [
+                "cluster_id",
+                "num"
+            ],
+            "properties": {
+                "cluster_id": {
+                    "type": "string",
+                    "example": "cluster"
+                },
+                "num": {
+                    "type": "string",
+                    "example": "1"
+                }
+            }
+        },
         "proto.NKDResult": {
             "type": "object",
             "properties": {
@@ -415,7 +492,7 @@ const docTemplate = `{
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
 	Host:             "0.0.0.0:9090",
-	BasePath:         "/swagger/index.html",
+	BasePath:         "",
 	Schemes:          []string{},
 	Title:            "统一运维入口",
 	Description:      "接受运维管理平台的请求，进行os以云原生的方式进行升级",
