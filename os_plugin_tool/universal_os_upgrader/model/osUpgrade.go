@@ -54,8 +54,13 @@ func (o *OSUpgradeImpl) RegisterSubCmd() *cobra.Command {
 
 func RunUpgradeCmd(cmd *cobra.Command, args []string) error {
 	r := runner.Runner{}
-	//OS备份
-	osbackup := NewOSBackup(r)
+
+	osbackup, err := NewOSBackup()
+	if err != nil {
+		logrus.Errorf("failed to execute OS backup: %v", err)
+		return err
+	}
+
 	if err := osbackup.CopyData(); err != nil {
 		return err
 	}

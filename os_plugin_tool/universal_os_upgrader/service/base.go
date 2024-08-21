@@ -25,7 +25,12 @@ import (
 )
 
 func InitCmd() {
-	univeralOSUpgradeCmd := model.NewUniversalOS()
+	univeralOSUpgradeCmd, err := model.NewUniversalOS()
+	if err != nil {
+		logrus.Error("Initialize failed")
+		return
+	}
+
 	topCmd := univeralOSUpgradeCmd.RegisterEntryCmd()
 	subCmdList := univeralOSUpgradeCmd.GetSubCmd()
 	if len(subCmdList) < 1 {
