@@ -7,5 +7,6 @@ const (
 	Upgrade  OperatorType = "Upgrade"  //os 升级
 	Rollback OperatorType = "Rollback" //os 回滚
 
-	BackupConfig = "/opt/kubemate/backup.yaml"
+	BackupConfig   = "/opt/kubemate/config/backup.yaml"
+	RollbackConfig = "/opt/kubemate/config/rollback.yaml"
 )

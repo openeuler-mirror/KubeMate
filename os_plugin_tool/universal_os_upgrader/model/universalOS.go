@@ -25,9 +25,10 @@ import (
 )
 
 type UniversalOS struct {
-	FuncCmd       []*cobra.Command
-	OSBackupImpl  *OSBackupImpl
-	OSUpgradeImpl *OSUpgradeImpl
+	FuncCmd        []*cobra.Command
+	OSBackupImpl   *OSBackupImpl
+	OSUpgradeImpl  *OSUpgradeImpl
+	OSRollbackImpl *OSRollbackImpl
 }
 
 func NewUniversalOS() (*UniversalOS, error) {
@@ -36,9 +37,15 @@ func NewUniversalOS() (*UniversalOS, error) {
 		return nil, fmt.Errorf("failed to execute OS backup: %w", err)
 	}
 
+	osRollbackImpl, err := NewOSRollback()
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute OS rollback: %w", err)
+	}
+
 	return &UniversalOS{
-		OSBackupImpl:  osBackupImpl,
-		OSUpgradeImpl: NewOSUpgrade(),
+		OSBackupImpl:   osBackupImpl,
+		OSUpgradeImpl:  NewOSUpgrade(),
+		OSRollbackImpl: osRollbackImpl,
 	}, nil
 }
 
@@ -50,6 +57,8 @@ func (uo *UniversalOS) RegisterEntryCmd() *cobra.Command {
 
 	uo.RegisterSubCmd(uo.OSBackupImpl.RegisterSubCmd())
 	uo.RegisterSubCmd(uo.OSUpgradeImpl.RegisterSubCmd())
+	uo.RegisterSubCmd(uo.OSRollbackImpl.RegisterSubCmd())
+
 	return cmd
 }
 
