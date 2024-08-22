@@ -1,37 +1,28 @@
 /*
- *
  * Copyright 2024 KylinSoft  Co., Ltd.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * 	http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- * /
+ * KubeMate is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *     http://license.coscl.org.cn/MulanPSL2
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY OR FIT FOR A PARTICULAR
+ * PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
+
 package common
 
-import "universal_os_upgrader/pkg/template"
-
-const (
-	HandleBackup  = "backup"
-	HandleUpdate  = "update"
-	HandleRecover = "recover"
+import (
+	"fmt"
+	"universal_os_upgrader/pkg/template"
 )
 
-func GetRearShell(handleType string) (string, error) {
-	shell := `
-#!/bin/bash
+func GetRearShell(handleType string, nfsServer string, nfsPath string) (string, error) {
+	shell := fmt.Sprintf(`#!/bin/bash
 
-BACKUP_DIR="/root"
 REAR_CONF_FILE="/etc/rear/local.conf"
 REAR_MKBACKUP_SCRIPT="/tmp/rear-mkbackup.sh"
+BACKUP_URL="nfs://%s%s"
 
 setup_environment() {
     sudo yum install -y rear genisoimage syslinux psmisc
@@ -66,66 +57,48 @@ configure_rear() {
 
     cat > "$REAR_MKBACKUP_SCRIPT" << EOF
 #!/bin/bash
-echo "OUTPUT=ISO" >> $REAR_CONF_FILE
-echo "OUTPUT_URL=null" >> $REAR_CONF_FILE
+echo "OUTPUT=PXE" >> $REAR_CONF_FILE
 echo "BACKUP=NETFS" >> $REAR_CONF_FILE
-echo "BACKUP_URL=iso:///backup" >> $REAR_CONF_FILE
-echo "ISO_DIR=$BACKUP_DIR" >> $REAR_CONF_FILE
+echo "BACKUP_URL=$BACKUP_URL" >> $REAR_CONF_FILE
 echo "BACKUP_PROG_EXCLUDE=(${BACKUP_PROG_EXCLUDE[@]} '/media' '/var/tmp' '/var/crash' '/tmp')" >> $REAR_CONF_FILE
 echo "NETFS_KEEP_OLD_BACKUP_COPY=yes" >> $REAR_CONF_FILE
 echo "MODULES=('all_modules')" >> $REAR_CONF_FILE
+echo "COPY_AS_IS+=('/usr/lib64/libsepol.so.2')" >> $REAR_CONF_FILE
 EOF
 
     chmod +x "$REAR_MKBACKUP_SCRIPT"
 }
 
-create_recovery_iso() {
+execute_backup() {
     bash "$REAR_MKBACKUP_SCRIPT"
 
     if ! rear -d -v mkbackup; then
-        echo "Failed to create recovery ISO."
+        echo "Failed to execute backup."
         exit 1
     fi
 
     rm -f "$REAR_MKBACKUP_SCRIPT"
 
-    echo "Recovery ISO created successfully."
+    echo "Execute backup created successfully."
 }
 
 handle_backup() {
     setup_environment
     configure_rear
-    create_recovery_iso
-}
-
-handle_update() {
-    handle_backup
-}
-
-handle_recover() {
-    echo "Comming soon..."
+    execute_backup
 }
 
 case {{ .handleType }} in
     backup)
         handle_backup
         ;;
-    update)
-        handle_update
-        ;;
-    recover)
-        handle_recover
-        ;;
-    help)
-        echo "Usage: $0 {backup|update|recover|help}"
-	exit 1
-        ;;
     *)
         echo "Usage: $0 {backup|update|recover}"
         exit 1
         ;;
 esac
-`
+`, nfsServer, nfsPath)
+
 	datastore := map[string]interface{}{}
 	datastore["handleType"] = handleType
 	shellfile, err := template.TemplateRender(shell, datastore)

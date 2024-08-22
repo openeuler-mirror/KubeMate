@@ -18,17 +18,28 @@
 
 package model
 
-import "github.com/spf13/cobra"
+import (
+	"fmt"
+
+	"github.com/spf13/cobra"
+)
 
 type UniversalOS struct {
 	FuncCmd       []*cobra.Command
+	OSBackupImpl  *OSBackupImpl
 	OSUpgradeImpl *OSUpgradeImpl
 }
 
-func NewUniversalOS() *UniversalOS {
-	return &UniversalOS{
-		OSUpgradeImpl: NewOSUpgrade(),
+func NewUniversalOS() (*UniversalOS, error) {
+	osBackupImpl, err := NewOSBackup()
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute OS backup: %w", err)
 	}
+
+	return &UniversalOS{
+		OSBackupImpl:  osBackupImpl,
+		OSUpgradeImpl: NewOSUpgrade(),
+	}, nil
 }
 
 func (uo *UniversalOS) RegisterEntryCmd() *cobra.Command {
@@ -37,6 +48,7 @@ func (uo *UniversalOS) RegisterEntryCmd() *cobra.Command {
 		Short: "universal os upgrade tool",
 	}
 
+	uo.RegisterSubCmd(uo.OSBackupImpl.RegisterSubCmd())
 	uo.RegisterSubCmd(uo.OSUpgradeImpl.RegisterSubCmd())
 	return cmd
 }
