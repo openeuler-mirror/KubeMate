@@ -13,16 +13,14 @@ package model
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
 	"strings"
 	"universal_os_upgrader/constValue"
+	"universal_os_upgrader/model/command"
 	"universal_os_upgrader/pkg/common"
 	"universal_os_upgrader/pkg/utils/runner"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v2"
 )
 
 type OSBackupImpl struct {
@@ -35,7 +33,7 @@ type OSBackupConfig struct {
 }
 
 func NewOSBackup() (*OSBackupImpl, error) {
-	config, err := loadConfig(constValue.BackupConfig)
+	config, err := command.LoadConfig[OSBackupConfig](constValue.BackupConfig)
 	if err != nil {
 		logrus.Errorf("failed to load os backup config: %s", err)
 		return nil, err
@@ -46,74 +44,9 @@ func NewOSBackup() (*OSBackupImpl, error) {
 	}, nil
 }
 
-func loadConfig(filePath string) (*OSBackupConfig, error) {
-	err := valideConfigFile(filePath)
-	if err != nil {
-		logrus.Errorf("failed to get os bakcup config: %s", err)
-		return nil, err
-	}
-
-	data, err := os.ReadFile(filePath)
-	if err != nil {
-		logrus.Errorf("failed to read config file: %s", err)
-		return nil, err
-	}
-
-	var config OSBackupConfig
-	if err := yaml.Unmarshal(data, &config); err != nil {
-		logrus.Errorf("failed to unmarshal config: %s", err)
-		return nil, err
-	}
-
-	return &config, nil
-}
-
-func valideConfigFile(filePath string) error {
-	// valide dir
-	dir := filepath.Dir(filePath)
-	if _, err := os.Stat(dir); os.IsNotExist(err) {
-		err := os.MkdirAll(dir, 0755)
-		if err != nil {
-			logrus.Errorf("failed to create directory %s: %s", dir, err)
-			return err
-		}
-		logrus.Infof("Directory created: %s\n", dir)
-	}
-
-	// valide file
-	if _, err := os.Stat(filePath); os.IsNotExist(err) {
-		file, err := os.Create(filePath)
-		if err != nil {
-			logrus.Errorf("failed to create file %s: %s", filePath, err)
-			return err
-		}
-		defer file.Close()
-
-		defaultConfig := OSBackupConfig{
-			NfsServer: "",
-			NfsPath:   "",
-		}
-		data, err := yaml.Marshal(&defaultConfig)
-		if err != nil {
-			logrus.Errorf("failed to marshal default config: %s", err)
-			return err
-		}
-
-		_, err = file.Write(data)
-		if err != nil {
-			logrus.Errorf("failed to write default config to file %s: %s", filePath, err)
-			return err
-		}
-
-		logrus.Infof("File created with default config: %s\n", filePath)
-	}
-
-	return nil
-}
-
 func (o *OSBackupImpl) RegisterSubCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:   "backup",
+		Use:   string(constValue.Backup),
 		Short: "os backup",
 		RunE:  o.RunBackupCmd,
 	}
