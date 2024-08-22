@@ -8,5 +8,6 @@ const (
 	Rollback OperatorType = "Rollback" //os 回滚
 
 	BackupConfig   = "/opt/kubemate/config/backup.yaml"
+	UpgradeConfig  = "/opt/kubemate/config/upgrade.yaml"
 	RollbackConfig = "/opt/kubemate/config/rollback.yaml"
 )

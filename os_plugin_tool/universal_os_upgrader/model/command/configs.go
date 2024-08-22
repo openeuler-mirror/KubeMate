@@ -21,25 +21,6 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-func ReadConfigFile(opts *OptionsList) (*PluginConfig, error) {
-	if opts.File == "" {
-		logrus.Error("plugin config file path is empty")
-		return nil, errors.New("plugin config file path empty")
-	}
-
-	fileData, err := os.ReadFile(opts.File)
-	if err != nil {
-		logrus.Errorf("failed to read config file %s :%v", opts.File, err)
-		return nil, err
-	}
-	configData := &PluginConfig{}
-	if err := yaml.Unmarshal(fileData, configData); err != nil {
-		logrus.Errorf("failed to unmarshal json file:%v", err)
-		return nil, err
-	}
-	return configData, nil
-}
-
 func LoadConfig[T any](filePath string) (*T, error) {
 	err := validateConfigFile[T](filePath)
 	if err != nil {

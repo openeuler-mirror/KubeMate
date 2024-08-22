@@ -15,6 +15,7 @@ package model
 import (
 	"os"
 	"path/filepath"
+	"universal_os_upgrader/constValue"
 	"universal_os_upgrader/model/command"
 	"universal_os_upgrader/pkg/utils"
 	"universal_os_upgrader/pkg/utils/runner"
@@ -34,8 +35,7 @@ type OSUpgradeImpl struct {
 }
 
 type OSUpgradeConfig struct {
-	Image   string `json:"image"`
-	Version string `json:"version"`
+	Repo string `json:"repo,omitempty"`
 }
 
 func NewOSUpgrade() *OSUpgradeImpl {
@@ -44,11 +44,10 @@ func NewOSUpgrade() *OSUpgradeImpl {
 
 func (o *OSUpgradeImpl) RegisterSubCmd() *cobra.Command {
 	upgradeCmd := &cobra.Command{
-		Use:   "upgrade",
+		Use:   string(constValue.Upgrade),
 		Short: "os upgrade",
 		RunE:  RunUpgradeCmd,
 	}
-	command.SetupUpgradeCmdOpts(upgradeCmd)
 	return upgradeCmd
 }
 
@@ -65,10 +64,12 @@ func RunUpgradeCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	configData, err := command.ReadConfigFile(&command.Opts)
+	configData, err := command.LoadConfig[OSUpgradeConfig](constValue.UpgradeConfig)
 	if err != nil {
+		logrus.Errorf("failed to load os upgrade config: %s", err)
 		return err
 	}
+
 	//repo源文件备份
 	if err := utils.RenameRepoFiles(); err != nil {
 		return err
