@@ -33,7 +33,17 @@ UniversalOS Backup
 
 ### Upgrade
 
-> TODO
+#### Prepare config file
+```yaml
+# /opt/kubemate/config/upgrade.yaml
+repo: |
+```
+
+#### How to use
+```shell
+# If you use openEuler
+UniversalOS Upgrade
+```
 
 ### Rollback
 
