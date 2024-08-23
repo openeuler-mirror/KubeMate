@@ -33,7 +33,17 @@ UniversalOS Backup
 
 ### 升级
 
-> TODO
+#### 准备配置文件
+```yaml
+# /opt/kubemate/config/upgrade.yaml
+repo: |
+```
+#### 调用方法
+
+```shell
+# 假设当前操作系统为 openEuler
+UniversalOS Upgrade
+```
 
 ### 回滚
 
