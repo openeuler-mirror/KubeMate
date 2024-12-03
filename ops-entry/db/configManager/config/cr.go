@@ -1,18 +1,26 @@
+/*
+ * Copyright (c) KylinSoft  Co., Ltd. 2024.All rights reserved.
+ * KubeMate licensed under the Mulan Permissive Software License, Version 2.
+ * See LICENSE file for more details.
+ * Author: liukuo <liukuo@kylinos.cn>
+ * Date: Thu Jul 25 16:18:53 2024 +0800
+ */
 package config
 
 import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/sirupsen/logrus"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"ops-entry/common/util"
 	"ops-entry/constValue"
 	"ops-entry/db/configManager"
 	"strconv"
 	"strings"
+
+	"github.com/sirupsen/logrus"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 type CrImpl struct {

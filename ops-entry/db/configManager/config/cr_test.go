@@ -1,12 +1,20 @@
+/*
+ * Copyright (c) KylinSoft  Co., Ltd. 2024.All rights reserved.
+ * KubeMate licensed under the Mulan Permissive Software License, Version 2.
+ * See LICENSE file for more details.
+ * Author: weihuanhuan <weihuanhuan@kylinos.cn>
+ * Date: Thu Jul 25 16:18:53 2024 +0800
+ */
 package config
 
 import (
 	"context"
+	"testing"
+
 	"github.com/agiledragon/gomonkey/v2"
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"testing"
 )
 
 // 缺少gomokey mock和assert断言， gomonkey 不支持 x86/amd

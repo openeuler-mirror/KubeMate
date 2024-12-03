@@ -1,19 +1,28 @@
+/*
+ * Copyright (c) KylinSoft  Co., Ltd. 2024.All rights reserved.
+ * KubeMate licensed under the Mulan Permissive Software License, Version 2.
+ * See LICENSE file for more details.
+ * Author: weihuanhuan <weihuanhuan@kylinos.cn>
+ * Date: Thu Jul 25 16:18:53 2024 +0800
+ */
 package config
 
 import (
 	"context"
 	"fmt"
-	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"ops-entry/constValue"
 	"strconv"
 	"strings"
 
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+
 	"errors"
+	"ops-entry/common/util"
+	"ops-entry/db/configManager"
+
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"ops-entry/common/util"
-	"ops-entry/db/configManager"
 )
 
 type MapImpl struct {
