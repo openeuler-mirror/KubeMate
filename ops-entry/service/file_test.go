@@ -1,9 +1,14 @@
+/*
+ * Copyright (c) KylinSoft  Co., Ltd. 2024.All rights reserved.
+ * KubeMate licensed under the Mulan Permissive Software License, Version 2.
+ * See LICENSE file for more details.
+ * Author: lijian <lijian@kylinos.cn>
+ * Date: Thu Jul 25 16:18:53 2024 +0800
+ */
 package service
 
 import (
 	"fmt"
-	"github.com/agiledragon/gomonkey/v2"
-	"github.com/stretchr/testify/assert"
 	"mime/multipart"
 	"ops-entry/common/util"
 	"ops-entry/constValue"
@@ -11,6 +16,9 @@ import (
 	"os/user"
 	"path/filepath"
 	"testing"
+
+	"github.com/agiledragon/gomonkey/v2"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestUploadFile(t *testing.T) {
